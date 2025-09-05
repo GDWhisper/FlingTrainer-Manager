@@ -1,6 +1,6 @@
 // main.js
 
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const { crawlIfUpdated } = require("./crawler");
 const { searchGames } = require("./searchCrawler.js");
 const { getDownloadInfo } = require("./downloadCrawler.js");
@@ -29,13 +29,13 @@ function createWindow() {
   mainWindow.loadFile("index.html");
   // 打开开发者工具（调试用）
   // mainWindow.webContents.openDevTools();
-  
+
   // 将窗口添加到窗口数组中
   windows.push(mainWindow);
-  
+
   // 监听窗口关闭事件，从数组中移除
-  mainWindow.on('closed', () => {
-    windows = windows.filter(win => win !== mainWindow);
+  mainWindow.on("closed", () => {
+    windows = windows.filter((win) => win !== mainWindow);
   });
 }
 
@@ -50,21 +50,21 @@ function createDetailWindow(url) {
       contextIsolation: true,
     },
   });
-  
+
   // 在新窗口中打开指定URL
   detailWindow.loadURL(url);
-  
+
   // 打开开发者工具（调试用）
   // detailWindow.webContents.openDevTools();
-  
+
   // 将窗口添加到窗口数组中
   windows.push(detailWindow);
-  
+
   // 监听窗口关闭事件，从数组中移除
-  detailWindow.on('closed', () => {
-    windows = windows.filter(win => win !== detailWindow);
+  detailWindow.on("closed", () => {
+    windows = windows.filter((win) => win !== detailWindow);
   });
-  
+
   return detailWindow;
 }
 
@@ -114,4 +114,44 @@ ipcMain.handle("open-detail-window", async (event, url) => {
 // 所有窗口关闭时退出应用（macOS 除外）
 app.on("window-all-closed", function () {
   if (process.platform !== "darwin") app.quit();
+});
+
+// 添加设置文件路径
+const settingsFile = path.join(app.getPath("userData"), "settings.json");
+
+// 加载设置
+ipcMain.handle("load-settings", async () => {
+  try {
+    if (fs.existsSync(settingsFile)) {
+      const settingsData = fs.readFileSync(settingsFile, "utf8");
+      return JSON.parse(settingsData);
+    }
+    return {};
+  } catch (err) {
+    console.error("加载设置失败:", err);
+    return {};
+  }
+});
+
+// 保存设置
+ipcMain.handle("save-settings", async (event, settings) => {
+  try {
+    fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2));
+    return { success: true };
+  } catch (err) {
+    console.error("保存设置失败:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+// 选择文件夹
+ipcMain.handle("select-folder", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory"],
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
 });

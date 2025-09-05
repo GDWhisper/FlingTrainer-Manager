@@ -454,3 +454,59 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast("警告：部分功能可能无法正常工作");
   }
 });
+
+// 设置相关功能
+document.addEventListener('DOMContentLoaded', () => {
+  // 加载保存的设置
+  loadSettings();
+  
+  // 绑定选择文件夹按钮事件
+  const selectFolderBtn = document.getElementById('select-folder-btn');
+  if (selectFolderBtn) {
+    selectFolderBtn.addEventListener('click', selectDownloadFolder);
+  }
+});
+
+// 加载设置
+async function loadSettings() {
+  try {
+    if (typeof window.api !== "undefined" && window.api.loadSettings) {
+      const settings = await window.api.loadSettings();
+      if (settings.downloadFolder) {
+        document.getElementById('download-folder').value = settings.downloadFolder;
+      }
+    }
+  } catch (err) {
+    console.error('加载设置失败:', err);
+  }
+}
+
+// 选择下载文件夹
+async function selectDownloadFolder() {
+  try {
+    if (typeof window.api !== "undefined" && window.api.selectFolder) {
+      const folderPath = await window.api.selectFolder();
+      if (folderPath) {
+        document.getElementById('download-folder').value = folderPath;
+        // 保存设置
+        saveSettings({ downloadFolder: folderPath });
+      }
+    }
+  } catch (err) {
+    console.error('选择文件夹失败:', err);
+    showToast('选择文件夹失败');
+  }
+}
+
+// 保存设置
+async function saveSettings(settings) {
+  try {
+    if (typeof window.api !== "undefined" && window.api.saveSettings) {
+      await window.api.saveSettings(settings);
+      showToast('设置已保存');
+    }
+  } catch (err) {
+    console.error('保存设置失败:', err);
+    showToast('保存设置失败');
+  }
+}

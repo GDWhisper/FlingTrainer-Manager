@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>风灵月影宗 v0.0.1</title>
+    <title>风灵月影宗 v0.0.5</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -15,6 +15,7 @@
           <li><a href="#home" class="nav-link">首页</a></li>
           <li><a href="#all-games" class="nav-link">所有游戏</a></li>
           <li><a href="#cheats" class="nav-link">我的工具</a></li>
+          <li><a href="#settings" class="nav-link">设置</a></li>
           <li><a href="#about" class="nav-link">关于</a></li>
         </ul>
         <!-- 官方网站放在底部 -->
@@ -90,7 +91,19 @@
           </div>
         </div>
       </div>
-
+      <!-- 设置 -->
+      <div id="settings" class="page hidden">
+        <h2>设置</h2>
+        <div class="settings-section">
+          <h3>下载设置</h3>
+          <div class="setting-item">
+            <label for="download-folder">下载文件夹:</label>
+            <input type="text" id="download-folder" placeholder="请选择下载文件夹路径">
+            <button id="select-folder-btn" class="btn">选择文件夹</button>
+            <p class="setting-description">所有下载任务的文件都会保存到此文件夹，应用的文件管理功能（如查看、打开、删除）也基于此目录。</p>
+          </div>
+        </div>
+      </div>
       <!-- 关于 -->
       <div id="about" class="page hidden">
         <h2>关于本软件</h2>
@@ -141,16 +154,15 @@
               </p>  
             </div>
 
-            <h4>支持</h4>
-            <p>
-              如有关于本软件的问题或建议，请联系：bilibili@禾傀<br /><br />
-              如有关于风灵月影(FLiNG
-              Trainer)的问题，请访问其官方网站寻求支持：<a
-                href="https://flingtrainer.com"
-                target="_blank"
-                >https://flingtrainer.com</a
-              >
-            </p>
+            <h4>支持与反馈</h4>
+            <ul>
+              <p><strong>关于本软件 (风灵月影宗)：</strong><br>
+                如有问题或建议，请联系：bilibili@禾傀
+              </p>
+              <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
+                请访问官方支持：<a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+              </p>
+            </ul>
           </div>
         </div>
         <!-- 官方网站（隐藏页，仅用于跳转） -->
