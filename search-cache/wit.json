@@ -1,0 +1,80 @@
+{
+  "games": [
+    {
+      "name": "WitchSpring R Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/05/header-12-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/witchspring-r-trainer/"
+    },
+    {
+      "name": "The Evil Within Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2023/10/header-3-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/the-evil-within-trainer/"
+    },
+    {
+      "name": "The Witcher 3: Wild Hunt Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2021/05/header-2-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/the-witcher-3-wild-hunt-trainer/"
+    },
+    {
+      "name": "Little Witch Nobeta Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2020/06/header-12-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/little-witch-nobeta-trainer/"
+    },
+    {
+      "name": "Ni no Kuni: Wrath of the White Witch Remastered Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2019/09/header-10-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/ni-no-kuni-wrath-of-the-white-witch-remastered-trainer/"
+    },
+    {
+      "name": "Gears of War: Reloaded Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/08/header-9-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/gears-of-war-reloaded-trainer/"
+    },
+    {
+      "name": "Killing Floor 3 Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/08/header-4-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/killing-floor-3-trainer/"
+    },
+    {
+      "name": "House of Legacy Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/07/header_schinese-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/house-of-legacy-trainer/"
+    },
+    {
+      "name": "Elden Ring Nightreign Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/05/header-5-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/elden-ring-nightreign-trainer/"
+    },
+    {
+      "name": "FANTASY LIFE i: The Girl Who Steals Time Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/05/header-3-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/fantasy-life-i-the-girl-who-steals-time-trainer/"
+    },
+    {
+      "name": "Ascension Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/05/header_schinese-1-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/ascension-trainer/"
+    },
+    {
+      "name": "Monster Hunter Wilds Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/02/header-6-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/monster-hunter-wilds-trainer/"
+    },
+    {
+      "name": "Kingdom Come: Deliverance II Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/02/header-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/kingdom-come-deliverance-ii-trainer/"
+    },
+    {
+      "name": "SWORD ART ONLINE Fractured Daydream Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/10/header-4-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/sword-art-online-fractured-daydream-trainer/"
+    },
+    {
+      "name": "Dragon Ball: Sparking! ZERO Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/10/header-1-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/dragon-ball-sparking-zero-trainer/"
+    }
+  ],
+  "timestamp": 1757041633807
+}

@@ -1,0 +1,80 @@
+{
+  "games": [
+    {
+      "name": "WitchSpring R Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/05/header-12-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/witchspring-r-trainer/"
+    },
+    {
+      "name": "The Witcher 3: Wild Hunt Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2021/05/header-2-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/the-witcher-3-wild-hunt-trainer/"
+    },
+    {
+      "name": "Little Witch Nobeta Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2020/06/header-12-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/little-witch-nobeta-trainer/"
+    },
+    {
+      "name": "Ni no Kuni: Wrath of the White Witch Remastered Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2019/09/header-10-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/ni-no-kuni-wrath-of-the-white-witch-remastered-trainer/"
+    },
+    {
+      "name": "Killing Floor 3 Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/08/header-4-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/killing-floor-3-trainer/"
+    },
+    {
+      "name": "Monster Hunter Wilds Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2025/02/header-6-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/monster-hunter-wilds-trainer/"
+    },
+    {
+      "name": "SWORD ART ONLINE Fractured Daydream Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/10/header-4-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/sword-art-online-fractured-daydream-trainer/"
+    },
+    {
+      "name": "Dragon Ball: Sparking! ZERO Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/10/header-1-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/dragon-ball-sparking-zero-trainer/"
+    },
+    {
+      "name": "Jianghu Chronicles Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/08/header-2-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/jianghu-chronicles-trainer/"
+    },
+    {
+      "name": "F1 24 Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/06/header-2-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/f1-24-trainer/"
+    },
+    {
+      "name": "Star Ocean: The Second Story R Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/03/header-5-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/star-ocean-the-second-story-r-trainer/"
+    },
+    {
+      "name": "Banishers: Ghosts of New Eden Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2024/02/header-9-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/banishers-ghosts-of-new-eden-trainer/"
+    },
+    {
+      "name": "Soulstone Survivors Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2022/09/header-8-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/soulstone-survivors-trainer/"
+    },
+    {
+      "name": "Warhammer 40,000: Chaos Gate – Daemonhunters Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2022/05/header-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/warhammer-40000-chaos-gate-daemonhunters-trainer/"
+    },
+    {
+      "name": "Mi Chang Sheng Trainer",
+      "img": "https://flingtrainer.com/wp-content/uploads/2022/02/header-3-200x200.jpg",
+      "downloadPageLink": "https://flingtrainer.com/trainer/mi-chang-sheng-trainer/"
+    }
+  ],
+  "timestamp": 1757041399911
+}

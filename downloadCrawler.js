@@ -136,12 +136,14 @@ async function getDownloadInfo(downloadPageUrl) {
     const $attachmentsTable = $(".da-attachments-table");
     if ($attachmentsTable.length > 0) {
       // 查找 class="zip alt" 或 class="zip" 的行
-      const $zipRows = $attachmentsTable.find("tr[class='zip alt'], tr[class='zip']");
-      
+      const $zipRows = $attachmentsTable.find(
+        "tr[class='zip alt'], tr[class='zip']"
+      );
+
       for (let i = 0; i < $zipRows.length; i++) {
         const $row = $($zipRows[i]);
         const $attachmentTitle = $row.find(".attachment-title");
-        
+
         if ($attachmentTitle.length > 0) {
           const $link = $attachmentTitle.find("a.attachment-link");
           if ($link.length > 0) {
@@ -174,23 +176,6 @@ async function getDownloadInfo(downloadPageUrl) {
           return false;
         }
       });
-    }
-
-    // 查找提取码/密码
-    const contentText = $(".entry-content").text();
-    const passwordPatterns = [
-      /密码[:：]?\s*([a-zA-Z0-9]+)/,
-      /提取码[:：]?\s*([a-zA-Z0-9]+)/,
-      /code[:：]?\s*([a-zA-Z0-9]+)/,
-      /密码\s*[:：]?\s*([^\s\n]+)/,
-    ];
-
-    for (const pattern of passwordPatterns) {
-      const match = contentText.match(pattern);
-      if (match) {
-        downloadPassword = match[1];
-        break;
-      }
     }
 
     // 判断是否为外部链接

@@ -38,66 +38,83 @@ function showTab(tabId) {
   document.getElementById(tabId).classList.remove("hidden");
 }
 
-// 加载所有游戏数据
+// 加载所有游戏数据（带防抖处理）
 async function loadAllGames() {
-  const container = document.getElementById("games-container");
-  container.innerHTML = "<p> 正在加载最近更新的游戏...</p>";
+  // 如果正在加载中，则直接返回
+  if (isLoadingGames) {
+    return;
+  }
 
-  try {
-    // 确保 window.api 存在
-    if (typeof window.api === "undefined") {
-      throw new Error("API 未定义，请检查预加载脚本是否正确加载");
-    }
+  // 清除之前的防抖定时器
+  if (loadGamesTimeout) {
+    clearTimeout(loadGamesTimeout);
+  }
 
-    const result = await window.api.loadGames();
+  // 设置新的防抖定时器，延迟300ms执行加载
+  loadGamesTimeout = setTimeout(async () => {
+    isLoadingGames = true;
 
-    if (result.error) {
-      container.innerHTML = `<p> 加载失败：${result.error}</p>`;
-      return;
-    }
+    const container = document.getElementById("games-container");
+    container.innerHTML = "<p> 正在加载最近更新的游戏...</p>";
 
-    let html = `<h4>最近更新</h4><div class="game-list">`;
+    try {
+      // 确保 window.api 存在
+      if (typeof window.api === "undefined") {
+        throw new Error("API 未定义，请检查预加载脚本是否正确加载");
+      }
 
-    result.data.forEach((game) => {
-      // 防止 game.img 或 game.name 为 null/undefined
-      const img = game.img ? game.img.trim() : "pic/default.png";
-      const name = game.name ? game.name.trim() : "未知游戏";
-      const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
+      const result = await window.api.loadGames();
 
-      html += `
+      if (result.error) {
+        container.innerHTML = `<p> 加载失败：${result.error}</p>`;
+        return;
+      }
+
+      let html = `<h4>最近更新</h4><div class="game-list">`;
+
+      result.data.forEach((game) => {
+        // 防止 game.img 或 game.name 为 null/undefined
+        const img = game.img ? game.img.trim() : "pic/default.png";
+        const name = game.name ? game.name.trim() : "未知游戏";
+        const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
+
+        html += `
     <div class="game-card" data-download-link="${link}">
       <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='pic/default.png';">
       <div class="info">
         <h3 title="${name}">${name}</h3>
         <button class="btn detail-btn" onclick="openDetailPage('${link}', '${name.replace(
-        /'/g,
-        "\\'"
-      )}', this)">详情页</button>
+          /'/g,
+          "\\'"
+        )}', this)">详情页</button>
         <button class="btn download-btn" onclick="downloadGame('${link}', '${name.replace(
-        /'/g,
-        "\\'"
-      )}', this)">下载</button>
+          /'/g,
+          "\\'"
+        )}', this)">下载</button>
       </div>
     </div>
   `;
-    });
+      });
 
-    html += `</div>`;
+      html += `</div>`;
 
-    const allGamesPage = document.getElementById("all-games");
-    if (allGamesPage && !allGamesPage.classList.contains("hidden")) {
-      if (result.fromCache) {
-        showToast("没有更新哦");
-      } else {
-        showToast(`最新数据 | ${new Date().toLocaleString()}`);
+      const allGamesPage = document.getElementById("all-games");
+      if (allGamesPage && !allGamesPage.classList.contains("hidden")) {
+        if (result.fromCache) {
+          showToast("没有更新哦");
+        } else {
+          showToast(`最新数据 | ${new Date().toLocaleString()}`);
+        }
       }
-    }
 
-    container.innerHTML = html;
-  } catch (err) {
-    console.error("前端加载游戏失败:", err);
-    container.innerHTML = `<p>加载失败：${err.message}</p>`;
-  }
+      container.innerHTML = html;
+    } catch (err) {
+      console.error("前端加载游戏失败:", err);
+      container.innerHTML = `<p>加载失败：${err.message}</p>`;
+    } finally {
+      isLoadingGames = false;
+    }
+  }, 300); // 300ms 防抖延迟
 }
 
 // 监听导航链接
@@ -155,58 +172,93 @@ function showToast(message) {
   }, 4000);
 }
 
-// 搜索渲染进程
+// 防抖变量
+let searchTimeout;
+let isSearching = false;
+let loadGamesTimeout;
+let isLoadingGames = false;
+
+// 搜索渲染进程（带防抖处理）
 async function performSearch() {
+  // 如果正在搜索中，则直接返回
+  if (isSearching) {
+    return;
+  }
+
   const keyword = document.getElementById("gameSearch").value.trim();
   if (!keyword) return;
 
-  const container = document.getElementById("search-results");
-  container.innerHTML = "<p> 正在搜索...</p>";
-
-  // 显示搜索结果区域
-  document.getElementById("search-results-container").style.display = "block";
-
-  try {
-    // 确保 window.api 存在
-    if (typeof window.api === "undefined") {
-      throw new Error("API 未定义，请检查预加载脚本是否正确加载");
-    }
-
-    const result = await window.api.searchGames(keyword);
-
-    if (result.error) {
-      container.innerHTML = `<p style="color: #999; text-align: center;">${result.error}</p>`;
-    } else {
-      if (result.data && result.data.length > 0) {
-        container.innerHTML = result.data
-          .map(
-            (game) => `
-          <div class="game-card" data-download-link="${game.downloadPageLink}">
-            <img src="${game.img || "pic/default.png"}" alt="${
-              game.name
-            }" onerror="this.onerror=null;this.src='pic/default.png';">
-            <div class="info">
-              <h3 title="${game.name}">${game.name}</h3>
-              <button class="btn detail-btn" onclick="openDetailPage('${
-                game.downloadPageLink
-              }', '${game.name.replace(/'/g, "\\'")}', this)">详情页</button>
-              <button class="btn download-btn" onclick="downloadGame('${
-                game.downloadPageLink
-              }', '${game.name.replace(/'/g, "\\'")}', this)">下载</button>
-            </div>
-          </div>
-        `
-          )
-          .join("");
-      } else {
-        container.innerHTML =
-          '<p style="color: #999; text-align: center;">未找到相关游戏</p>';
-      }
-    }
-  } catch (err) {
-    console.error("搜索失败:", err);
-    container.innerHTML = `<p style="color: #999; text-align: center;">搜索失败：${err.message}</p>`;
+  // 清除之前的防抖定时器
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
   }
+
+  // 设置新的防抖定时器，延迟500ms执行搜索
+  searchTimeout = setTimeout(async () => {
+    isSearching = true;
+
+    const searchButton = document.querySelector(".search-btn");
+    const originalButtonText = searchButton.textContent;
+
+    // 更新按钮状态
+    searchButton.textContent = "搜索中...";
+    searchButton.disabled = true;
+
+    const container = document.getElementById("search-results");
+    container.innerHTML = "<p> 正在搜索...</p>";
+
+    // 显示搜索结果区域
+    document.getElementById("search-results-container").style.display = "block";
+
+    try {
+      // 确保 window.api 存在
+      if (typeof window.api === "undefined") {
+        throw new Error("API 未定义，请检查预加载脚本是否正确加载");
+      }
+
+      const result = await window.api.searchGames(keyword);
+
+      if (result.error) {
+        container.innerHTML = `<p style="color: #999; text-align: center;">${result.error}</p>`;
+      } else {
+        if (result.data && result.data.length > 0) {
+          container.innerHTML = result.data
+            .map(
+              (game) => `
+            <div class="game-card" data-download-link="${
+              game.downloadPageLink
+            }">
+              <img src="${game.img || "pic/default.png"}" alt="${
+                game.name
+              }" onerror="this.onerror=null;this.src='pic/default.png';">
+              <div class="info">
+                <h3 title="${game.name}">${game.name}</h3>
+                <button class="btn detail-btn" onclick="openDetailPage('${
+                  game.downloadPageLink
+                }', '${game.name.replace(/'/g, "\\'")}', this)">详情页</button>
+                <button class="btn download-btn" onclick="downloadGame('${
+                  game.downloadPageLink
+                }', '${game.name.replace(/'/g, "\\'")}', this)">下载</button>
+              </div>
+            </div>
+          `
+            )
+            .join("");
+        } else {
+          container.innerHTML =
+            '<p style="color: #999; text-align: center;">未找到相关游戏</p>';
+        }
+      }
+    } catch (err) {
+      console.error("搜索失败:", err);
+      container.innerHTML = `<p style="color: #999; text-align: center;">搜索失败：${err.message}</p>`;
+    } finally {
+      // 恢复按钮状态
+      searchButton.textContent = "搜索";
+      searchButton.disabled = false;
+      isSearching = false;
+    }
+  }, 500); // 500ms 防抖延迟
 }
 
 // 清空搜索输入框
@@ -214,12 +266,22 @@ function clearSearchInput() {
   document.getElementById("gameSearch").value = "";
   document.getElementById("search-results-container").style.display = "none";
   document.getElementById("search-results").innerHTML = "";
-}
 
-// 支持 Enter 键
-document.getElementById("gameSearch").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") performSearch();
-});
+  // 如果有正在进行的搜索，取消它
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+    searchTimeout = null;
+  }
+
+  // 恢复搜索按钮状态
+  const searchButton = document.querySelector(".search-btn");
+  if (searchButton) {
+    searchButton.textContent = "搜索";
+    searchButton.disabled = false;
+  }
+
+  isSearching = false;
+}
 
 // 统一的打开外部链接方法
 function openExternalUrl(url) {
@@ -373,9 +435,13 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
   }
 }
 
-// 支持 Enter 键
+// 支持 Enter 键（带防抖处理）
 document.getElementById("gameSearch").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") performSearch();
+  if (e.key === "Enter") {
+    // 阻止默认行为，避免重复提交
+    e.preventDefault();
+    performSearch();
+  }
 });
 
 // 调试信息：检查 API 是否正确加载
