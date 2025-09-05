@@ -10,9 +10,10 @@ function navigateTo(pageId) {
     targetPage.classList.remove("hidden");
   }
 
-  // 如果是"我的修改器"，默认显示"已下载"页签
+  // 如果是"我的工具"，默认显示"已下载"页签
   if (pageId === "cheats") {
     showTab("downloaded");
+    downloadedPageLoaded = false; // 重置状态，确保下次切换时重新加载
   }
 
   // 如果是"所有游戏"页面，加载游戏数据
@@ -21,6 +22,8 @@ function navigateTo(pageId) {
   }
 }
 
+// 跟踪已安装页面是否已加载
+let downloadedPageLoaded = false;
 // 页签切换函数
 function showTab(tabId) {
   // 清除所有按钮的 active 状态
@@ -36,6 +39,139 @@ function showTab(tabId) {
   });
   // 显示目标页签
   document.getElementById(tabId).classList.remove("hidden");
+
+  // 如果是已安装标签页且未加载过，则加载内容
+  if (tabId === "downloaded" && !downloadedPageLoaded) {
+    loadDownloadedFiles();
+    downloadedPageLoaded = true;
+  }
+}
+
+// 加载已下载的文件列表
+async function loadDownloadedFiles() {
+  const container = document.getElementById("downloaded");
+
+  try {
+    // 显示加载状态
+    container.innerHTML = "<p>正在加载已安装的工具...</p>";
+
+    // 获取设置
+    const settings = await window.api.loadSettings();
+
+    if (!settings.downloadFolder) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>请先设置下载文件夹</p>
+          <button class="btn" onclick="navigateTo('settings')">前往设置</button>
+        </div>
+      `;
+      return;
+    }
+
+    // 获取文件列表
+    const result = await window.api.listDownloadedFiles(
+      settings.downloadFolder
+    );
+
+    if (!result.success) {
+      container.innerHTML = `<p>加载失败: ${result.error}</p>`;
+      return;
+    }
+
+    if (result.files.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>暂无已安装的工具</p>
+          <p>前往"所有游戏"页面下载工具</p>
+        </div>
+      `;
+      return;
+    }
+
+    // 生成文件列表HTML
+    let html = '<div class="installed-tools-list">';
+
+    result.files.forEach((file) => {
+      const fileNameWithoutExt = path.basename(
+        file.name,
+        path.extname(file.name)
+      );
+
+      html += `
+        <div class="tool-item">
+          <div class="tool-icon">
+            ${file.isExecutable ? "🎮" : "📦"}
+          </div>
+          <div class="tool-info">
+            <h4>${fileNameWithoutExt}</h4>
+            <p class="file-name">${file.name}</p>
+            <p class="file-size">大小: ${formatFileSize(file.size)}</p>
+            <p class="file-date">修改时间: ${formatDate(file.modified)}</p>
+          </div>
+          <div class="tool-actions">
+      `;
+
+      if (file.isExecutable) {
+        html += `
+          <button class="btn launch-btn" onclick="launchTool('${file.path.replace(
+            /\\/g,
+            "\\\\"
+          )}')">
+            启动
+          </button>
+        `;
+      } else if (file.isCompressed) {
+        html += `
+          <button class="btn open-folder-btn" onclick="openDownloadFolder('${settings.downloadFolder.replace(
+            /\\/g,
+            "\\\\"
+          )}')">
+            打开文件夹
+          </button>
+          <p class="compression-note">Oopz~!这个文件还没解压呢，请进入文件夹手动解压</p>
+        `;
+      }
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+
+    html += "</div>";
+    container.innerHTML = html;
+  } catch (err) {
+    console.error("加载已下载文件失败:", err);
+    container.innerHTML = `<p>加载失败: ${err.message}</p>`;
+  }
+}
+
+// 启动工具函数
+function launchTool(filePath) {
+  try {
+    // 使用 shell.openPath 启动可执行文件
+    window.api.openFolder(filePath);
+    showToast("正在启动工具...");
+  } catch (err) {
+    console.error("启动工具失败:", err);
+    showToast("启动工具失败: " + err.message);
+  }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+// 格式化日期
+function formatDate(date) {
+  return new Date(date).toLocaleString("zh-CN");
 }
 
 // 加载所有游戏数据（带防抖处理）
@@ -391,7 +527,10 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
     }
 
     // 获取下载信息
-    const downloadInfo = await window.api.getDownloadInfo(downloadPageUrl, gameName);
+    const downloadInfo = await window.api.getDownloadInfo(
+      downloadPageUrl,
+      gameName
+    );
 
     if (downloadInfo.error) {
       showToast(`下载失败: ${downloadInfo.error}`);
@@ -532,7 +671,7 @@ function updateDownloadTasksUI() {
         break;
     }
 
-  html += `
+    html += `
     <div class="download-task-item">
       <div class="task-info">
         <h4>${task.gameName}</h4>
@@ -644,3 +783,20 @@ document.addEventListener("click", function (e) {
     openDownloadFolder(folderPath);
   }
 });
+
+// 添加 path 对象的简化实现（在浏览器环境中不可用）
+if (typeof path === "undefined") {
+  var path = {
+    basename: function (path, ext) {
+      let fileName = path.split("\\").pop().split("/").pop();
+      if (ext && fileName.endsWith(ext)) {
+        return fileName.slice(0, -ext.length);
+      }
+      return fileName;
+    },
+    extname: function (path) {
+      const parts = path.split(".");
+      return parts.length > 1 ? "." + parts.pop() : "";
+    },
+  };
+}

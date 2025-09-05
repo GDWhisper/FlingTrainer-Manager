@@ -634,3 +634,137 @@ body {
 .task-actions .btn:hover {
   background: #005a99;
 }
+
+/* 已下载工具列表样式 */
+.installed-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.tool-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.tool-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.tool-icon {
+  font-size: 2em;
+  margin-right: 15px;
+  width: 50px;
+  text-align: center;
+}
+
+.tool-info {
+  flex: 1;
+}
+
+.tool-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.file-name {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.file-size,
+.file-date {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.tool-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 15px;
+}
+
+.tool-actions .btn {
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+  min-width: 80px;
+  text-align: center;
+}
+
+.tool-actions .btn:hover {
+  background: #005a99;
+}
+
+.compression-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #ff6b6b;
+  text-align: center;
+  max-width: 150px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.empty-state p {
+  margin: 10px 0;
+}
+
+.empty-state .btn {
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+  margin-top: 10px;
+}
+
+.empty-state .btn:hover {
+  background: #005a99;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .tool-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .tool-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .tool-actions {
+    margin-left: 0;
+    margin-top: 15px;
+    align-items: center;
+  }
+
+  .compression-note {
+    max-width: none;
+  }
+}

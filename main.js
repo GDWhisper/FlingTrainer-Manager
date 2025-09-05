@@ -302,3 +302,45 @@ ipcMain.handle("open-folder", async (event, folderPath) => {
     return { success: false, error: err.message };
   }
 });
+
+// 在 main.js 中添加新的 IPC 处理函数
+ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
+  try {
+    // 检查文件夹是否存在
+    if (!fs.existsSync(folderPath)) {
+      return { success: false, error: "下载文件夹不存在" };
+    }
+
+    // 读取文件夹内容
+    const files = fs.readdirSync(folderPath);
+
+    // 过滤出 exe 和压缩文件
+    const validFiles = files.filter((file) => {
+      const ext = path.extname(file).toLowerCase();
+      return (
+        ext === ".exe" || ext === ".zip" || ext === ".rar" || ext === ".7z"
+      );
+    });
+
+    // 获取文件详细信息
+    const fileList = validFiles.map((file) => {
+      const filePath = path.join(folderPath, file);
+      const stat = fs.statSync(filePath);
+      const ext = path.extname(file).toLowerCase();
+
+      return {
+        name: file,
+        path: filePath,
+        size: stat.size,
+        modified: stat.mtime,
+        isExecutable: ext === ".exe",
+        isCompressed: ext === ".zip" || ext === ".rar" || ext === ".7z",
+      };
+    });
+
+    return { success: true, files: fileList };
+  } catch (err) {
+    console.error("读取下载文件夹失败:", err);
+    return { success: false, error: err.message };
+  }
+});
