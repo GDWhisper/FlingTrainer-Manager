@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风灵月影宗 v0.0.1</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- 左侧边栏 -->
+      <div class="sidebar">
+        <h2 class="logo">风灵月影宗</h2>
+        <ul class="menu">
+          <li><a href="#home" class="nav-link">首页</a></li>
+          <li><a href="#all-games" class="nav-link">所有游戏</a></li>
+          <li><a href="#cheats" class="nav-link">我的工具</a></li>
+          <li><a href="#about" class="nav-link">关于</a></li>
+        </ul>
+        <!-- 官方网站放在底部 -->
+        <!-- <ul class="menu bottom-menu">
+          <li>
+            <a href="#website" class="nav-link website-link" id="website-link"
+              >风灵月影官方网站</a
+            >
+          </li>
+        </ul> -->
+      </div>
+
+      <!-- 主内容区 -->
+      <div class="content" id="content">
+        <!-- 首页 -->
+        <div id="home" class="page">
+          <h1>欢迎加入风灵月影宗</h1>
+          <p class="welcome-text">
+            1.本软件仅提供从宗门下载游戏辅助工具的便利服务。<br />
+            2.任何要求您付费下载、购买激活码或解锁本软件功能等行为均视为诈骗，切勿相信。<br />
+            3.本软件官方获取渠道：<a href="">Bilibili</a> <br />
+            4.通过任何其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失，本人概不负责。
+          </p>
+        </div>
+
+        <!-- 所有游戏 -->
+        <div id="all-games" class="page hidden">
+          <h2>所有游戏</h2>
+          <!-- 搜索框 + 按钮 -->
+          <div class="search-box">
+            <input
+              type="text"
+              id="gameSearch"
+              placeholder="输入游戏名称搜索..."
+              autocomplete="off"
+            />
+            <button type="button" class="search-btn" onclick="performSearch()">
+              搜索
+            </button>
+          </div>
+          <span class="clear-search" onclick="clearSearchInput()">×</span>
+          <h3>游戏列表</h3>
+            <!-- 搜索结果（动态插入） -->
+            <div id="search-results-container" style="display: none;">
+              <h4>搜索结果</h4>
+                <div id="search-results" class="game-list"></div>
+            </div>
+            <!-- 最近更新容器 -->
+            <div id="games-container" class="game-list"></div>
+        </div>
+      
+      <!-- 我的工具 -->
+      <div id="cheats" class="page hidden">
+        <h2>我的工具</h2>
+        <!-- 页签按钮 -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="downloaded">已下载</button>
+          <button class="tab-btn" data-tab="favorite">收藏</button>
+        </div>
+        <!-- 页签内容 -->
+        <div class="tab-content">
+          <div id="downloaded" class="tab-pane">
+            <p>你已下载的工具：</p>
+            <ul>
+              <li>艾尔登法环 v1.05 修改器</li>
+              <li>赛博朋克2077 无限生命</li>
+              <li>霍格沃茨之遗 隐形斗篷</li>
+            </ul>
+          </div>
+          <div id="favorite" class="tab-pane hidden">
+            <p>这功能还没做呢</p>
+            <ul></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关于 -->
+      <div id="about" class="page hidden">
+        <h2>关于本软件</h2>
+
+        <div class="about-section">
+          <h3>作者：bilibili@禾傀</h3>
+
+          <div class="disclaimer-section">
+            <h4>软件性质</h4>
+            <p>
+              本软件（风灵月影宗）是一个免费的游戏辅助工具下载程序，其唯一功能是从
+              <a href="https://flingtrainer.com" target="_blank"
+                >https://flingtrainer.com</a
+              >
+              获取并本地管理游戏辅助工具。
+            </p>
+
+            <h4>免责声明</h4>
+
+            <div class="disclaimer-item">
+              <p class="disclaimer-title"><strong>非官方关联：</strong></p>
+              <p>
+                本软件由开发者本人独立开发，并非风灵月影(FLiNG
+                Trainer)的官方团队、合作伙伴或代理商，也与其无任何隶属关系。
+              </p>
+              <p>
+                用户从任何渠道跳转至风灵月影(FLiNG
+                Trainer)官方网站，其页面上的广告、赞助内容、付费服务或任何形式的商业收入，均与本人（本软件开发者）无任何关联。本人不从中获取任何收益，也不对其内容负责。
+              </p>
+            </div>
+
+            <div class="disclaimer-item">
+              <p class="disclaimer-title"><strong>软件责任：</strong></p>
+              <p>
+                本软件不修改、不破解、不重新分发任何软件文件。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
+                Trainer)的版权、功能性、安全性以及使用该软件所产生的任何直接或间接问题，均由该软件的原始作者和提供商承担全部责任。
+              </p>
+            </div>
+
+            <div class="disclaimer-item">
+              <p class="disclaimer-title"><strong>用户责任：</strong></p>
+              <p>
+                用户在使用本软件下载并安装风灵月影(FLiNG
+                Trainer)提供的软件前，应自行判断其合规性与安全性，并同意遵守该软件的所有授权条款。
+              </p>
+              <p>
+                如果用户通过任何非官方渠道下载、安装或运行本程序，由此导致的一切后果（包括但不限于：程序被篡改、植入病毒木马、捆绑恶意软件、数据泄露、财产损失等）均须由用户自行承担。
+              </p>  
+            </div>
+
+            <h4>支持</h4>
+            <p>
+              如有关于本软件的问题或建议，请联系：bilibili@禾傀<br /><br />
+              如有关于风灵月影(FLiNG
+              Trainer)的问题，请访问其官方网站寻求支持：<a
+                href="https://flingtrainer.com"
+                target="_blank"
+                >https://flingtrainer.com</a
+              >
+            </p>
+          </div>
+        </div>
+        <!-- 官方网站（隐藏页，仅用于跳转） -->
+        <div id="website" class="page hidden"></div>
+      </div>
+    </div>
+
+    <!-- 渲染进程脚本 -->
+    <script src="renderer.js"></script>
+  </body>
+</html>

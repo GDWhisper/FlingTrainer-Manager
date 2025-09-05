@@ -1,0 +1,301 @@
+// renderer.js - 页面交互逻辑
+console.log("window.api:", window.api);
+
+// 添加 API 调用定义
+window.api = {
+  loadGames: () => ipcRenderer.invoke("load-games-from-web"),
+  searchGames: (keyword) => ipcRenderer.invoke("search-games", keyword),
+};
+// 页面切换函数
+function navigateTo(pageId) {
+  document.querySelectorAll(".page").forEach((page) => {
+    page.classList.add("hidden");
+  });
+  const targetPage = document.getElementById(pageId);
+  if (targetPage) {
+    targetPage.classList.remove("hidden");
+  }
+
+  // 如果是"我的修改器"，默认显示"已下载"页签
+  if (pageId === "cheats") {
+    showTab("downloaded");
+  }
+
+  // 如果是"所有游戏"页面，加载游戏数据
+  if (pageId === "all-games") {
+    loadAllGames();
+  }
+}
+
+// 页签切换函数
+function showTab(tabId) {
+  // 清除所有按钮的 active 状态
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  // 给当前按钮加 active
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add("active");
+
+  // 隐藏所有页签内容
+  document.querySelectorAll(".tab-pane").forEach((pane) => {
+    pane.classList.add("hidden");
+  });
+  // 显示目标页签
+  document.getElementById(tabId).classList.remove("hidden");
+}
+
+// 加载所有游戏数据
+async function loadAllGames() {
+  const container = document.getElementById("games-container");
+  container.innerHTML = "<p> 正在加载最近更新的游戏...</p>";
+
+  try {
+    const result = await window.api.loadGames();
+
+    if (result.error) {
+      container.innerHTML = `<p> 加载失败：${result.error}</p>`;
+      return;
+    }
+
+    let html = `<h4>最近更新</h4><div class="game-list">`;
+
+    result.data.forEach((game) => {
+      // 防止 game.img 或 game.name 为 null/undefined
+      const img = game.img ? game.img.trim() : "pic/default.png";
+      const name = game.name ? game.name.trim() : "未知游戏";
+      const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
+
+      html += `
+    <div class="game-card">
+      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='pic/default.png';">
+      <div class="info">
+        <h3 title="${name}">${name}</h3>
+        <a href="${link}" target="_blank" class="btn" >下载</a>
+      </div>
+    </div>
+  `;
+    });
+
+    html += `</div>`;
+
+    const allGamesPage = document.getElementById("all-games");
+    if (allGamesPage && !allGamesPage.classList.contains("hidden")) {
+      if (result.fromCache) {
+        showToast("没有更新哦");
+      } else {
+        showToast(`最新数据 | ${new Date().toLocaleString()}`);
+      }
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error("前端加载游戏失败:", err);
+    container.innerHTML = "<p>网络错误，请检查连接或重试。</p>";
+  }
+}
+
+// 监听导航链接
+document.querySelectorAll(".nav-link").forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    const target = e.target.getAttribute("href").substring(1);
+
+    if (target === "website") {
+      // 打开外部网站
+      require("electron").shell.openExternal("https://flingtrainer.com");
+    } else {
+      navigateTo(target);
+    }
+  });
+});
+
+// 监听页签按钮
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const tabId = btn.getAttribute("data-tab");
+    showTab(tabId);
+  });
+});
+// 浮动提示函数
+function showToast(message) {
+  // 创建提示元素
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+
+  // 设置样式
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    z-index: 10000;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  `;
+
+  // 添加到页面
+  document.body.appendChild(toast);
+
+  // 4秒后移除
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 4000);
+}
+
+// 搜索渲染进程
+async function performSearch() {
+  const keyword = document.getElementById("gameSearch").value.trim();
+  if (!keyword) return;
+
+  const container = document.getElementById("search-results");
+  container.innerHTML = "<p> 正在搜索...</p>";
+
+  // 显示搜索结果区域
+  document.getElementById("search-results-container").style.display = "block";
+
+  try {
+    const result = await window.api.searchGames(keyword);
+
+    if (result.error) {
+      container.innerHTML = `<p style="color: #999; text-align: center;">${result.error}</p>`;
+    } else {
+      if (result.data && result.data.length > 0) {
+        container.innerHTML = result.data
+          .map(
+            (game) => `
+          <div class="game-card">
+            <img src="${game.img || "pic/default.png"}" alt="${
+              game.name
+            }" onerror="this.onerror=null;this.src='pic/default.png';">
+            <div class="info">
+              <h3 title="${game.name}">${game.name}</h3>
+              <a href="${
+                game.downloadPageLink
+              }" target="_blank" class="btn">下载</a>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      } else {
+        container.innerHTML =
+          '<p style="color: #999; text-align: center;">未找到相关游戏</p>';
+      }
+    }
+  } catch (err) {
+    console.error("搜索失败:", err);
+    container.innerHTML =
+      '<p style="color: #999; text-align: center;">搜索失败，请稍后重试</p>';
+  }
+}
+
+// 清空搜索输入框
+function clearSearchInput() {
+  document.getElementById("gameSearch").value = "";
+  document.getElementById("search-results-container").style.display = "none";
+  document.getElementById("search-results").innerHTML = "";
+}
+
+// 支持 Enter 键
+document.getElementById("gameSearch").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") performSearch();
+});
+
+// 添加下载功能
+const helloButton = document.getElementById("helloButton");
+const gameCards = document.querySelectorAll(".game-card");
+
+// 给按钮添加点击事件
+helloButton.addEventListener("click", () => {
+  alert("你好！");
+});
+
+// 为每个游戏卡片的下载按钮添加点击事件
+gameCards.forEach((card) => {
+  const downloadBtn = card.querySelector(".info a.btn");
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      // 获取游戏名称（用于显示）
+      const gameName = card.querySelector(".info h3").textContent;
+
+      try {
+        // 调用 Electron 的 IPC 消息获取下载信息
+        const result = await window.api.getDownloadInfo(downloadBtn.href);
+
+        if (result.error) {
+          alert(`下载失败：${result.error}`);
+          console.error(result);
+          return;
+        }
+
+        // 如果有提取码，提示用户
+        if (result.downloadPassword) {
+          alert(
+            `游戏：${gameName}\n\n下载链接：${result.downloadLink}\n\n提取码：${result.downloadPassword}`
+          );
+        } else {
+          alert(`游戏：${gameName}\n\n下载链接：${result.downloadLink}`);
+        }
+
+        // 在这里可以添加实际的下载逻辑
+        // 例如：使用浏览器的 download 属性或 Electron 的 download API
+      } catch (err) {
+        console.error("获取下载信息失败:", err);
+        alert("获取下载信息失败，请稍后重试");
+      }
+    });
+  }
+});
+
+// 下载
+document.addEventListener("DOMContentLoaded", () => {
+  // 等待页面加载完成
+  const downloadButtons = document.querySelectorAll(".game-card .info a.btn");
+
+  downloadButtons.forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault(); // 阻止默认跳转行为
+
+      const gameCard = btn.closest(".game-card");
+      const downloadPageLink = gameCard.dataset.downloadPageLink; // 假设我们把 downloadPageLink 存在 data 属性里
+
+      if (!downloadPageLink) return;
+
+      try {
+        const result = await window.api.getDownloadInfo(downloadPageLink);
+
+        if (result.error) {
+          alert(`下载失败：${result.error}`);
+          return;
+        }
+
+        const { downloadLink } = result;
+
+        if (!downloadLink) {
+          alert("未找到下载链接！");
+          return;
+        }
+
+        // 使用 <a> 标签触发下载
+        const link = document.createElement("a");
+        link.href = downloadLink;
+        link.download = ""; // 自动使用文件名
+        link.target = "_blank"; // 新标签页打开，避免阻塞
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // 清理 DOM
+      } catch (err) {
+        console.error("获取下载信息失败:", err);
+        alert("获取下载信息失败，请重试");
+      }
+    });
+  });
+});
