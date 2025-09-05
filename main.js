@@ -6,6 +6,9 @@ const { searchGames } = require("./searchCrawler.js");
 const { getDownloadInfo } = require("./downloadCrawler.js");
 const path = require("path");
 const fs = require("fs");
+const https = require("https");
+const http = require("http");
+const { URL } = require("url");
 
 const { Menu } = require("electron");
 // 创建一个空菜单
@@ -28,7 +31,7 @@ function createWindow() {
   // 加载本地 HTML 文件
   mainWindow.loadFile("index.html");
   // 打开开发者工具（调试用）
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // 将窗口添加到窗口数组中
   windows.push(mainWindow);
@@ -101,8 +104,13 @@ ipcMain.handle("search-games", async (event, keyword) => {
 });
 
 // 获取下载信息
-ipcMain.handle("get-download-info", async (event, downloadPageUrl) => {
-  return await getDownloadInfo(downloadPageUrl);
+ipcMain.handle("get-download-info", async (event, downloadPageUrl, gameName) => {
+  const result = await getDownloadInfo(downloadPageUrl);
+  // 使用传递过来的游戏名称覆盖下载页面提取的名称
+  if (gameName && gameName !== "未知游戏") {
+    result.gameName = gameName;
+  }
+  return result;
 });
 
 // 打开详情页窗口
@@ -154,4 +162,77 @@ ipcMain.handle("select-folder", async () => {
     return result.filePaths[0];
   }
   return null;
+});
+
+// 文件下载功能
+ipcMain.handle("download-file", async (event, url, folder) => {
+  try {
+    // 确保下载目录存在
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
+
+    // 从URL中提取文件名
+    const urlObj = new URL(url);
+    let fileName = path.basename(urlObj.pathname);
+
+    // 如果没有文件扩展名，尝试添加.zip
+    if (!path.extname(fileName)) {
+      fileName += ".zip";
+    }
+
+    // 处理文件名冲突
+    let filePath = path.join(folder, fileName);
+    let counter = 1;
+    const nameWithoutExt = path.basename(fileName, path.extname(fileName));
+    const ext = path.extname(fileName);
+
+    while (fs.existsSync(filePath)) {
+      const newName = `${nameWithoutExt}(${counter})${ext}`;
+      filePath = path.join(folder, newName);
+      counter++;
+    }
+
+    // 下载文件
+    const fileStream = fs.createWriteStream(filePath);
+
+    return new Promise((resolve) => {
+      const protocol = url.startsWith("https") ? https : http;
+
+      const request = protocol.get(url, (response) => {
+        response.pipe(fileStream);
+
+        fileStream.on("finish", () => {
+          fileStream.close();
+          resolve({ success: true, fileName: path.basename(filePath) });
+        });
+      });
+
+      request.on("error", (err) => {
+        fileStream.close();
+        fs.unlink(filePath, () => {}); // 删除未完成的文件
+        resolve({ success: false, error: err.message });
+      });
+
+      request.setTimeout(30000, () => {
+        request.abort();
+        fileStream.close();
+        fs.unlink(filePath, () => {});
+        resolve({ success: false, error: "下载超时" });
+      });
+    });
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// 添加打开文件夹功能
+ipcMain.handle("open-folder", async (event, folderPath) => {
+  try {
+    await shell.openPath(folderPath);
+    return { success: true };
+  } catch (err) {
+    console.error("打开文件夹失败:", err);
+    return { success: false, error: err.message };
+  }
 });

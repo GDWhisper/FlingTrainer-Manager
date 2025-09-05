@@ -353,10 +353,29 @@ async function openDetailPage(downloadPageUrl, gameName, buttonElement) {
   }
 }
 
+// 下载任务列表
+let downloadTasks = [];
+
 // 下载游戏功能
 async function downloadGame(downloadPageUrl, gameName, buttonElement) {
   if (!downloadPageUrl || downloadPageUrl === "#") {
     showToast("下载链接无效");
+    return;
+  }
+
+  // 检查用户是否设置了下载文件夹
+  let settings = {};
+  try {
+    if (typeof window.api !== "undefined" && window.api.loadSettings) {
+      settings = await window.api.loadSettings();
+    }
+  } catch (err) {
+    console.error("加载设置失败:", err);
+  }
+
+  if (!settings.downloadFolder) {
+    showToast("请先设置下载文件夹");
+    navigateTo("settings");
     return;
   }
 
@@ -372,7 +391,7 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
     }
 
     // 获取下载信息
-    const downloadInfo = await window.api.getDownloadInfo(downloadPageUrl);
+    const downloadInfo = await window.api.getDownloadInfo(downloadPageUrl, gameName);
 
     if (downloadInfo.error) {
       showToast(`下载失败: ${downloadInfo.error}`);
@@ -387,9 +406,6 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
       buttonElement.disabled = false;
       return;
     }
-
-    // 更新按钮状态
-    buttonElement.textContent = "正在下载...";
 
     // 如果是外部链接，打开浏览器
     if (
@@ -410,16 +426,9 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
       openExternalUrl(downloadInfo.downloadLink);
       buttonElement.textContent = "已打开外部链接";
     } else {
-      // 直接下载文件
-      const link = document.createElement("a");
-      link.href = downloadInfo.downloadLink;
-      link.download = "";
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      buttonElement.textContent = "已开始下载";
+      // 添加下载任务
+      addDownloadTask(downloadInfo, settings.downloadFolder);
+      buttonElement.textContent = "已添加到下载队列";
     }
 
     // 3秒后恢复按钮状态
@@ -432,6 +441,122 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
     showToast(`下载失败：${err.message}`);
     buttonElement.textContent = originalText;
     buttonElement.disabled = false;
+  }
+}
+
+// 添加下载任务
+function addDownloadTask(downloadInfo, downloadFolder) {
+  const taskId = Date.now().toString();
+  const task = {
+    id: taskId,
+    gameName: downloadInfo.gameName,
+    downloadLink: downloadInfo.downloadLink,
+    downloadFolder: downloadFolder,
+    status: "pending", // pending, downloading, completed, failed
+    progress: 0,
+    fileName: "",
+  };
+
+  downloadTasks.push(task);
+  updateDownloadTasksUI();
+
+  // 开始下载
+  startDownload(task);
+}
+
+// 开始下载文件
+async function startDownload(task) {
+  try {
+    // 更新任务状态
+    task.status = "downloading";
+    updateDownloadTasksUI();
+
+    // 调用主进程下载文件
+    if (typeof window.api !== "undefined" && window.api.downloadFile) {
+      const result = await window.api.downloadFile(
+        task.downloadLink,
+        task.downloadFolder
+      );
+
+      if (result.success) {
+        task.status = "completed";
+        task.fileName = result.fileName;
+        showToast(`"${task.gameName}" 下载完成`);
+      } else {
+        task.status = "failed";
+        showToast(`"${task.gameName}" 下载失败: ${result.error}`);
+      }
+    } else {
+      task.status = "failed";
+      showToast(`"${task.gameName}" 下载失败: API未定义`);
+    }
+  } catch (err) {
+    task.status = "failed";
+    showToast(`"${task.gameName}" 下载失败: ${err.message}`);
+  }
+
+  updateDownloadTasksUI();
+}
+
+// 更新下载任务UI
+function updateDownloadTasksUI() {
+  const container = document.getElementById("download-tasks");
+
+  if (downloadTasks.length === 0) {
+    container.innerHTML = "<p>暂无下载任务</p>";
+    return;
+  }
+
+  let html = '<div class="download-tasks-list">';
+
+  downloadTasks.forEach((task) => {
+    let statusText = "";
+    let statusClass = "";
+
+    switch (task.status) {
+      case "pending":
+        statusText = "等待中";
+        statusClass = "status-pending";
+        break;
+      case "downloading":
+        statusText = "下载中...";
+        statusClass = "status-downloading";
+        break;
+      case "completed":
+        statusText = "已完成";
+        statusClass = "status-completed";
+        break;
+      case "failed":
+        statusText = "失败";
+        statusClass = "status-failed";
+        break;
+    }
+
+  html += `
+    <div class="download-task-item">
+      <div class="task-info">
+        <h4>${task.gameName}</h4>
+        <div class="task-status ${statusClass}">${statusText}</div>
+      </div>
+      <div class="task-actions">
+        ${
+          task.status === "completed"
+            ? `<button class="btn open-folder-btn" data-folder="${task.downloadFolder}">打开文件夹</button>`
+            : ""
+        }
+      </div>
+    </div>
+  `;
+  });
+
+  html += "</div>";
+  container.innerHTML = html;
+}
+
+// 打开下载文件夹
+function openDownloadFolder(folderPath) {
+  if (typeof window.api !== "undefined" && window.api.openFolder) {
+    window.api.openFolder(folderPath);
   }
 }
 
@@ -456,14 +581,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // 设置相关功能
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   // 加载保存的设置
   loadSettings();
-  
+
   // 绑定选择文件夹按钮事件
-  const selectFolderBtn = document.getElementById('select-folder-btn');
+  const selectFolderBtn = document.getElementById("select-folder-btn");
   if (selectFolderBtn) {
-    selectFolderBtn.addEventListener('click', selectDownloadFolder);
+    selectFolderBtn.addEventListener("click", selectDownloadFolder);
   }
 });
 
@@ -473,11 +598,12 @@ async function loadSettings() {
     if (typeof window.api !== "undefined" && window.api.loadSettings) {
       const settings = await window.api.loadSettings();
       if (settings.downloadFolder) {
-        document.getElementById('download-folder').value = settings.downloadFolder;
+        document.getElementById("download-folder").value =
+          settings.downloadFolder;
       }
     }
   } catch (err) {
-    console.error('加载设置失败:', err);
+    console.error("加载设置失败:", err);
   }
 }
 
@@ -487,14 +613,14 @@ async function selectDownloadFolder() {
     if (typeof window.api !== "undefined" && window.api.selectFolder) {
       const folderPath = await window.api.selectFolder();
       if (folderPath) {
-        document.getElementById('download-folder').value = folderPath;
+        document.getElementById("download-folder").value = folderPath;
         // 保存设置
         saveSettings({ downloadFolder: folderPath });
       }
     }
   } catch (err) {
-    console.error('选择文件夹失败:', err);
-    showToast('选择文件夹失败');
+    console.error("选择文件夹失败:", err);
+    showToast("选择文件夹失败");
   }
 }
 
@@ -503,10 +629,18 @@ async function saveSettings(settings) {
   try {
     if (typeof window.api !== "undefined" && window.api.saveSettings) {
       await window.api.saveSettings(settings);
-      showToast('设置已保存');
+      showToast("设置已保存");
     }
   } catch (err) {
-    console.error('保存设置失败:', err);
-    showToast('保存设置失败');
+    console.error("保存设置失败:", err);
+    showToast("保存设置失败");
   }
 }
+
+// 添加事件委托处理打开文件夹按钮
+document.addEventListener("click", function (e) {
+  if (e.target.classList.contains("open-folder-btn")) {
+    const folderPath = e.target.getAttribute("data-folder");
+    openDownloadFolder(folderPath);
+  }
+});

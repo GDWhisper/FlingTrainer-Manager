@@ -569,3 +569,68 @@ body {
   font-size: 13px;
   margin-top: 5px;
 }
+
+/* 下载任务样式 */
+.download-tasks-list {
+  margin-top: 15px;
+}
+
+.download-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #fafafa;
+}
+
+.task-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-pending {
+  background: #ffd54f;
+  color: #333;
+}
+
+.status-downloading {
+  background: #4fc3f7;
+  color: #fff;
+}
+
+.status-completed {
+  background: #81c784;
+  color: #fff;
+}
+
+.status-failed {
+  background: #e57373;
+  color: #fff;
+}
+
+.task-actions .btn {
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.3s;
+}
+
+.task-actions .btn:hover {
+  background: #005a99;
+}

@@ -76,8 +76,9 @@ async function getDownloadInfo(downloadPageUrl) {
 
     // 提取游戏名称
     const gameName =
-      $(".post-title h1").text().trim() ||
-      $(".post-title h2").text().trim() ||
+      $(".post-title h1").first().text().trim() ||
+      $(".post-title h2").first().text().trim() ||
+      $("title").text().split(" - ")[0].trim() ||
       "未知游戏";
 
     // ✅ 优先从附件表格中获取第一个下载链接
