@@ -135,16 +135,22 @@ async function getDownloadInfo(downloadPageUrl) {
     // 1. 优先从 attachment-link 中找有效文件
     const $attachmentsTable = $(".da-attachments-table");
     if ($attachmentsTable.length > 0) {
-      const $attachmentLinks = $attachmentsTable.find("a.attachment-link");
-      for (let i = 0; i < $attachmentLinks.length; i++) {
-        const $link = $($attachmentLinks[i]);
-        const href = $link.attr("href");
-        const text = $link.text().toLowerCase();
-
-        const validExtensions = /\.(zip|exe|rar|7z|iso|bin)$/i;
-        if (href && validExtensions.test(href)) {
-          downloadLink = href;
-          break;
+      // 查找 class="zip alt" 或 class="zip" 的行
+      const $zipRows = $attachmentsTable.find("tr[class='zip alt'], tr[class='zip']");
+      
+      for (let i = 0; i < $zipRows.length; i++) {
+        const $row = $($zipRows[i]);
+        const $attachmentTitle = $row.find(".attachment-title");
+        
+        if ($attachmentTitle.length > 0) {
+          const $link = $attachmentTitle.find("a.attachment-link");
+          if ($link.length > 0) {
+            const href = $link.attr("href");
+            if (href && href.includes("downloads")) {
+              downloadLink = href;
+              break;
+            }
+          }
         }
       }
     }

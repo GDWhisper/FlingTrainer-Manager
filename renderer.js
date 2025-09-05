@@ -290,6 +290,7 @@ async function openDetailPage(downloadPageUrl, gameName, buttonElement) {
     }
   }
 }
+
 // 下载游戏功能
 async function downloadGame(downloadPageUrl, gameName, buttonElement) {
   if (!downloadPageUrl || downloadPageUrl === "#") {
