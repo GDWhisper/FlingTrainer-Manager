@@ -303,8 +303,35 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 详情页按钮样式 */
+.game-card .info .btn.detail-btn,
+.game-card .info a.btn.detail-btn,
+.game-card .info button.btn.detail-btn {
+  background: linear-gradient(135deg, #2196f3 0%, #0d47a1 100%);
+  margin-right: 10px;
+}
 
-/* 美化下载按钮 */
+.game-card .info .btn.detail-btn:hover,
+.game-card .info a.btn.detail-btn:hover,
+.game-card .info button.btn.detail-btn:hover {
+  background: linear-gradient(135deg, #0d47a1 0%, #2196f3 100%);
+}
+
+
+/* 已打开详情页状态的按钮样式 */
+.game-card .info .btn.detail-btn.opened,
+.game-card .info a.btn.detail-btn.opened,
+.game-card .info button.btn.detail-btn.opened {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+}
+
+.game-card .info .btn.detail-btn.opened:hover,
+.game-card .info a.btn.detail-btn.opened:hover,
+.game-card .info button.btn.detail-btn.opened:hover {
+  background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+}
+
+/* 下载按钮 */
 .game-card .info .btn,
 .game-card .info a.btn,
 .game-card .info button.btn {
@@ -344,7 +371,7 @@ body {
 .game-card .info .btn::before,
 .game-card .info a.btn::before,
 .game-card .info button.btn::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -367,13 +394,13 @@ body {
 .game-card .info .btn.downloaded,
 .game-card .info a.btn.downloaded,
 .game-card .info button.btn.downloaded {
-  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
 }
 
 .game-card .info .btn.downloaded:hover,
 .game-card .info a.btn.downloaded:hover,
 .game-card .info button.btn.downloaded:hover {
-  background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+  background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
 }
 
 /* 收藏按钮样式 */
@@ -434,7 +461,6 @@ body {
   border: none;
   outline: none;
 }
-
 
 #gameSearch::placeholder {
   color: #999;

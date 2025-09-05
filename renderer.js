@@ -1,5 +1,4 @@
-// renderer.js - 页面交互逻辑
-console.log("window.api:", window.api);
+// renderer.js
 
 // 页面切换函数
 function navigateTo(pageId) {
@@ -45,6 +44,11 @@ async function loadAllGames() {
   container.innerHTML = "<p> 正在加载最近更新的游戏...</p>";
 
   try {
+    // 确保 window.api 存在
+    if (typeof window.api === "undefined") {
+      throw new Error("API 未定义，请检查预加载脚本是否正确加载");
+    }
+
     const result = await window.api.loadGames();
 
     if (result.error) {
@@ -54,7 +58,7 @@ async function loadAllGames() {
 
     let html = `<h4>最近更新</h4><div class="game-list">`;
 
-    result.data.forEach((game, index) => {
+    result.data.forEach((game) => {
       // 防止 game.img 或 game.name 为 null/undefined
       const img = game.img ? game.img.trim() : "pic/default.png";
       const name = game.name ? game.name.trim() : "未知游戏";
@@ -65,7 +69,14 @@ async function loadAllGames() {
       <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='pic/default.png';">
       <div class="info">
         <h3 title="${name}">${name}</h3>
-        <button class="btn download-btn" onclick="downloadGame('${link}', '${name.replace(/'/g, "\\'")}', this)">下载</button>
+        <button class="btn detail-btn" onclick="openDetailPage('${link}', '${name.replace(
+        /'/g,
+        "\\'"
+      )}', this)">详情页</button>
+        <button class="btn download-btn" onclick="downloadGame('${link}', '${name.replace(
+        /'/g,
+        "\\'"
+      )}', this)">下载</button>
       </div>
     </div>
   `;
@@ -85,7 +96,7 @@ async function loadAllGames() {
     container.innerHTML = html;
   } catch (err) {
     console.error("前端加载游戏失败:", err);
-    container.innerHTML = "<p>网络错误，请检查连接或重试。</p>";
+    container.innerHTML = `<p>加载失败：${err.message}</p>`;
   }
 }
 
@@ -97,7 +108,7 @@ document.querySelectorAll(".nav-link").forEach((link) => {
 
     if (target === "website") {
       // 打开外部网站
-      require("electron").shell.openExternal("https://flingtrainer.com");
+      openExternalUrl("https://flingtrainer.com");
     } else {
       navigateTo(target);
     }
@@ -146,69 +157,160 @@ function showToast(message) {
 
 // 搜索渲染进程
 async function performSearch() {
-  const keyword = document.getElementById('gameSearch').value.trim();
+  const keyword = document.getElementById("gameSearch").value.trim();
   if (!keyword) return;
 
-  const container = document.getElementById('search-results');
-  container.innerHTML = '<p> 正在搜索...</p>';
-  
+  const container = document.getElementById("search-results");
+  container.innerHTML = "<p> 正在搜索...</p>";
+
   // 显示搜索结果区域
-  document.getElementById('search-results-container').style.display = 'block';
-  
+  document.getElementById("search-results-container").style.display = "block";
+
   try {
+    // 确保 window.api 存在
+    if (typeof window.api === "undefined") {
+      throw new Error("API 未定义，请检查预加载脚本是否正确加载");
+    }
+
     const result = await window.api.searchGames(keyword);
-    
+
     if (result.error) {
       container.innerHTML = `<p style="color: #999; text-align: center;">${result.error}</p>`;
     } else {
       if (result.data && result.data.length > 0) {
-        container.innerHTML = result.data.map((game, index) => `
+        container.innerHTML = result.data
+          .map(
+            (game) => `
           <div class="game-card" data-download-link="${game.downloadPageLink}">
-            <img src="${game.img || 'pic/default.png'}" alt="${game.name}" onerror="this.onerror=null;this.src='pic/default.png';">
+            <img src="${game.img || "pic/default.png"}" alt="${
+              game.name
+            }" onerror="this.onerror=null;this.src='pic/default.png';">
             <div class="info">
               <h3 title="${game.name}">${game.name}</h3>
-              <button class="btn download-btn" onclick="downloadGame('${game.downloadPageLink}', '${game.name.replace(/'/g, "\\'")}', this)">下载</button>
+              <button class="btn detail-btn" onclick="openDetailPage('${
+                game.downloadPageLink
+              }', '${game.name.replace(/'/g, "\\'")}', this)">详情页</button>
+              <button class="btn download-btn" onclick="downloadGame('${
+                game.downloadPageLink
+              }', '${game.name.replace(/'/g, "\\'")}', this)">下载</button>
             </div>
           </div>
-        `).join('');
+        `
+          )
+          .join("");
       } else {
-        container.innerHTML = '<p style="color: #999; text-align: center;">未找到相关游戏</p>';
+        container.innerHTML =
+          '<p style="color: #999; text-align: center;">未找到相关游戏</p>';
       }
     }
   } catch (err) {
-    console.error('搜索失败:', err);
-    container.innerHTML = '<p style="color: #999; text-align: center;">搜索失败，请稍后重试</p>';
+    console.error("搜索失败:", err);
+    container.innerHTML = `<p style="color: #999; text-align: center;">搜索失败：${err.message}</p>`;
   }
 }
 
 // 清空搜索输入框
 function clearSearchInput() {
-  document.getElementById('gameSearch').value = '';
-  document.getElementById('search-results-container').style.display = 'none';
-  document.getElementById('search-results').innerHTML = '';
+  document.getElementById("gameSearch").value = "";
+  document.getElementById("search-results-container").style.display = "none";
+  document.getElementById("search-results").innerHTML = "";
 }
 
 // 支持 Enter 键
-document.getElementById('gameSearch').addEventListener('keypress', e => {
-  if (e.key === 'Enter') performSearch();
+document.getElementById("gameSearch").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") performSearch();
 });
 
+// 统一的打开外部链接方法
+function openExternalUrl(url) {
+  try {
+    // 检查 window.api 是否存在
+    if (typeof window.api !== "undefined" && window.api.openExternal) {
+      // 使用预加载脚本中暴露的 API 打开外部链接
+      window.api.openExternal(url);
+    } else {
+      // 备用方案：使用 window.open
+      window.open(url, "_blank");
+    }
+  } catch (err) {
+    console.error("打开外部链接失败:", err);
+    // 最后的备用方案
+    try {
+      window.location.href = url;
+    } catch (e) {
+      showToast("无法打开链接，请手动访问: " + url);
+    }
+  }
+}
+
+// 打开详情页功能
+async function openDetailPage(downloadPageUrl, gameName, buttonElement) {
+  if (
+    !downloadPageUrl ||
+    downloadPageUrl === "#" ||
+    downloadPageUrl === "undefined"
+  ) {
+    showToast("详情页链接无效");
+    return;
+  }
+
+  try {
+    // 保存原始按钮文本和状态
+    const originalText = buttonElement.textContent;
+    const wasOpened = buttonElement.classList.contains("opened");
+
+    // 更新按钮状态为"打开中"
+    // buttonElement.textContent = "打开中...";
+    // buttonElement.disabled = true;
+
+    // 检查 window.api 是否存在
+    if (typeof window.api !== "undefined" && window.api.openDetailWindow) {
+      // 使用 Electron 创建新窗口打开详情页
+      await window.api.openDetailWindow(downloadPageUrl);
+      showToast(`正在打开 ${gameName} 的Trainer下载详情页`);
+    } else {
+      // 备用方案：使用 window.open
+      window.open(downloadPageUrl, "_blank");
+      showToast(`正在打开 ${gameName} 的Trainer下载详情页`);
+    }
+
+    // // 更新按钮状态为"已打开"
+    // buttonElement.textContent = "已打开";
+    // buttonElement.disabled = false;
+    // buttonElement.classList.add("opened");
+  } catch (err) {
+    console.error("打开详情页失败:", err);
+    showToast("打开详情页失败");
+
+    // 恢复按钮原始状态
+    if (buttonElement) {
+      buttonElement.textContent = "详情页";
+      buttonElement.disabled = false;
+      buttonElement.classList.remove("opened");
+    }
+  }
+}
 // 下载游戏功能
 async function downloadGame(downloadPageUrl, gameName, buttonElement) {
-  if (!downloadPageUrl || downloadPageUrl === '#') {
-    showToast('下载链接无效');
+  if (!downloadPageUrl || downloadPageUrl === "#") {
+    showToast("下载链接无效");
     return;
   }
 
   // 保存原始按钮文本
   const originalText = buttonElement.textContent;
-  buttonElement.textContent = '获取下载信息...';
+  buttonElement.textContent = "获取下载信息...";
   buttonElement.disabled = true;
 
   try {
+    // 确保 window.api 存在
+    if (typeof window.api === "undefined") {
+      throw new Error("API 未定义，请检查预加载脚本是否正确加载");
+    }
+
     // 获取下载信息
     const downloadInfo = await window.api.getDownloadInfo(downloadPageUrl);
-    
+
     if (downloadInfo.error) {
       showToast(`下载失败: ${downloadInfo.error}`);
       buttonElement.textContent = originalText;
@@ -217,60 +319,71 @@ async function downloadGame(downloadPageUrl, gameName, buttonElement) {
     }
 
     if (!downloadInfo.downloadLink) {
-      showToast('未找到下载链接');
+      showToast("未找到下载链接");
       buttonElement.textContent = originalText;
       buttonElement.disabled = false;
       return;
     }
 
     // 更新按钮状态
-    buttonElement.textContent = '正在下载...';
+    buttonElement.textContent = "正在下载...";
 
     // 如果是外部链接，打开浏览器
-    if (downloadInfo.isExternal || 
-        downloadInfo.downloadLink.includes('mega.nz') || 
-        downloadInfo.downloadLink.includes('mediafire.com') || 
-        downloadInfo.downloadLink.includes('drive.google.com')) {
-      
+    if (
+      downloadInfo.isExternal ||
+      downloadInfo.downloadLink.includes("mega.nz") ||
+      downloadInfo.downloadLink.includes("mediafire.com") ||
+      downloadInfo.downloadLink.includes("drive.google.com")
+    ) {
       // 显示下载信息
       let message = `游戏: ${downloadInfo.gameName}\n`;
       message += `下载链接: ${downloadInfo.downloadLink}\n`;
       if (downloadInfo.downloadPassword) {
         message += `提取码: ${downloadInfo.downloadPassword}\n`;
       }
-      
+
       alert(message);
-      require('electron').shell.openExternal(downloadInfo.downloadLink);
-      
-      buttonElement.textContent = '已打开外部链接';
+
+      openExternalUrl(downloadInfo.downloadLink);
+      buttonElement.textContent = "已打开外部链接";
     } else {
       // 直接下载文件
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadInfo.downloadLink;
-      link.download = '';
-      link.target = '_blank';
+      link.download = "";
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      buttonElement.textContent = '已开始下载';
+
+      buttonElement.textContent = "已开始下载";
     }
-    
+
     // 3秒后恢复按钮状态
     setTimeout(() => {
-      buttonElement.textContent = '下载';
+      buttonElement.textContent = "下载";
       buttonElement.disabled = false;
     }, 3000);
-    
   } catch (err) {
-    console.error('下载失败:', err);
-    showToast('下载失败，请稍后重试');
+    console.error("下载失败:", err);
+    showToast(`下载失败：${err.message}`);
     buttonElement.textContent = originalText;
     buttonElement.disabled = false;
   }
 }
 
 // 支持 Enter 键
-document.getElementById('gameSearch').addEventListener('keypress', e => {
-  if (e.key === 'Enter') performSearch();
+document.getElementById("gameSearch").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") performSearch();
+});
+
+// 调试信息：检查 API 是否正确加载
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM 加载完成");
+  console.log("window.api:", window.api);
+
+  if (typeof window.api === "undefined") {
+    console.error("预加载脚本未正确加载，API 未定义");
+    showToast("警告：部分功能可能无法正常工作");
+  }
 });
