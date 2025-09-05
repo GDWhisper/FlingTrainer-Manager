@@ -8,7 +8,9 @@ const path = require('path');
 
 // ==================== 配置 ====================
 const TARGET_URL = 'https://flingtrainer.com';
-const CACHE_FILE = path.join(__dirname, 'games-cache.json'); // 使用绝对路径
+const CACHE_DIR = path.join(__dirname, 'cache'); // 统一缓存目录
+if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR); // 确保缓存目录存在
+const CACHE_FILE = path.join(CACHE_DIR, 'games-cache.json'); // 使用统一缓存目录
 const LOCK_TIME = 60 * 60 * 1000; // 缓存有效期：1小时
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',

@@ -6,9 +6,10 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 
-// 缓存目录
-const CACHE_DIR = path.join(__dirname, 'search-cache');
-if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
+// 缓存目录 - 统一使用 cache 文件夹
+const CACHE_DIR = path.join(__dirname, 'cache', 'search-cache');
+if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+
 
 // 缓存有效期：1 小时
 const CACHE_TTL = 60 * 60 * 1000;

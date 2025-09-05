@@ -4,11 +4,11 @@ const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
 
-// 缓存目录
+// 缓存目录 - 统一使用 cache 文件夹
 const CACHE_DIR = path.join(__dirname, "cache");
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
 const DOWNLOAD_CACHE_DIR = path.join(CACHE_DIR, "download-cache");
-if (!fs.existsSync(DOWNLOAD_CACHE_DIR)) fs.mkdirSync(DOWNLOAD_CACHE_DIR);
+if (!fs.existsSync(DOWNLOAD_CACHE_DIR)) fs.mkdirSync(DOWNLOAD_CACHE_DIR, { recursive: true });
 
 // 缓存有效期：1小时
 const CACHE_TTL = 60 * 60 * 1000;
