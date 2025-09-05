@@ -651,6 +651,7 @@ body {
   border-radius: 8px;
   background: #fafafa;
   transition: all 0.3s ease;
+  min-height: 80px; /* 设置最小高度确保一致性 */
 }
 
 .tool-item:hover {
@@ -659,26 +660,52 @@ body {
 }
 
 .tool-icon {
-  font-size: 2em;
-  margin-right: 15px;
   width: 50px;
-  text-align: center;
+  height: 50px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* 防止图标在空间不足时缩小 */
+  overflow: hidden; /* 确保图片不会溢出容器 */
+  border-radius: 4px; /* 添加圆角，与图片样式保持一致 */
+}
+
+.tool-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 确保图片完全填充容器 */
+  border-radius: 4px; /* 与容器保持一致的圆角 */
+  transition: all 0.3s ease; /* 添加过渡效果 */
+}
+
+/* 为没有图片的项目保留默认图标样式 */
+.tool-icon .default-icon {
+  font-size: 2em;
+  color: #999;
 }
 
 .tool-info {
-  flex: 1;
+  flex: 1; /* 占据剩余空间 */
+  min-width: 0; /* 允许文本溢出处理 */
 }
 
 .tool-info h4 {
   margin: 0 0 5px 0;
   font-size: 16px;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .file-name {
   margin: 0 0 5px 0;
   font-size: 14px;
   color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .file-size,
@@ -693,6 +720,7 @@ body {
   flex-direction: column;
   align-items: flex-end;
   margin-left: 15px;
+  min-width: 120px; /* 设置最小宽度确保按钮对齐 */
 }
 
 .tool-actions .btn {
@@ -706,6 +734,7 @@ body {
   transition: background 0.3s;
   min-width: 80px;
   text-align: center;
+  flex-shrink: 0; /* 防止按钮在空间不足时缩小 */
 }
 
 .tool-actions .btn:hover {
@@ -718,6 +747,7 @@ body {
   color: #ff6b6b;
   text-align: center;
   max-width: 150px;
+  flex-shrink: 0; /* 防止提示信息在空间不足时缩小 */
 }
 
 .empty-state {

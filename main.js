@@ -303,7 +303,7 @@ ipcMain.handle("open-folder", async (event, folderPath) => {
   }
 });
 
-// 在 main.js 中添加新的 IPC 处理函数
+// 已下载页签相关功能
 ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
   try {
     // 检查文件夹是否存在
@@ -322,11 +322,49 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
       );
     });
 
+    // 获取游戏缓存数据，用于匹配图片
+    let gameData = [];
+    try {
+      const cacheDir = path.join(__dirname, "cache");
+      const cacheFile = path.join(cacheDir, "games.json");
+      if (fs.existsSync(cacheFile)) {
+        const cacheContent = fs.readFileSync(cacheFile, "utf-8");
+        const cacheData = JSON.parse(cacheContent);
+        gameData = cacheData.data || [];
+      }
+    } catch (cacheErr) {
+      console.warn("读取游戏缓存数据失败:", cacheErr.message);
+    }
+
     // 获取文件详细信息
     const fileList = validFiles.map((file) => {
       const filePath = path.join(folderPath, file);
       const stat = fs.statSync(filePath);
       const ext = path.extname(file).toLowerCase();
+
+      // 尝试从文件名匹配游戏图片
+      let gameImage = null;
+      const fileNameWithoutExt = path.basename(file, path.extname(file));
+
+      // 在游戏数据中查找匹配项
+      const matchedGame = gameData.find((game) => {
+        if (!game.name) return false;
+        // 简单的匹配逻辑：检查文件名是否包含游戏名（忽略大小写和特殊字符）
+        const normalizedName = game.name
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+        const normalizedFileName = fileNameWithoutExt
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]/g, "");
+        return (
+          normalizedFileName.includes(normalizedName) ||
+          normalizedName.includes(normalizedFileName)
+        );
+      });
+
+      if (matchedGame && matchedGame.img) {
+        gameImage = matchedGame.img;
+      }
 
       return {
         name: file,
@@ -335,6 +373,7 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
         modified: stat.mtime,
         isExecutable: ext === ".exe",
         isCompressed: ext === ".zip" || ext === ".rar" || ext === ".7z",
+        image: gameImage || "pic/default.png",
       };
     });
 
