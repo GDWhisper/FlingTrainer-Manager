@@ -1,8 +1,8 @@
 // searchCrawler.js - 用于 Electron 应用的搜索爬虫
-// 导出 searchGames 函数，接收关键词，返回游戏列表
+// 使用 axios + cheerio 架构
 
-const { app } = require("electron"); // 添加这行导入 app
-const { chromium } = require("playwright");
+const { app } = require("electron");
+const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
@@ -58,11 +58,6 @@ function writeCache(keyword, games) {
   );
 }
 
-// 延时函数
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // 主搜索函数
 async function searchGames(keyword) {
   initCacheDir(); // 确保缓存目录已初始化
@@ -79,67 +74,21 @@ async function searchGames(keyword) {
   const SEARCH_URL = `https://flingtrainer.com/?s=${encodeURIComponent(
     keyword
   )}`;
-  let browser;
 
   try {
     console.log(`🔍 正在搜索：${keyword}`);
     console.log(`🌐 访问：${SEARCH_URL}`);
 
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-blink-features=AutomationControlled",
-        "--disable-web-security",
-        "--disable-features=IsolateOrigins,site-per-process",
-      ],
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, // 使用环境变量指定浏览器路径
+    const response = await axios.get(SEARCH_URL, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        Referer: "https://www.google.com/",
+      },
+      timeout: 30000,
     });
 
-    const randomUA = [
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    ][Math.floor(Math.random() * 2)];
-
-    const context = await browser.newContext({
-      userAgent: randomUA,
-      referer: "https://www.google.com/",
-      viewport: { width: 1280, height: 800 },
-      ignoreHTTPSErrors: true,
-    });
-
-    const page = await context.newPage();
-
-    // 隐藏自动化特征
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => false });
-      Object.defineProperty(navigator, "plugins", {
-        get: () => [1, 2, 3, 4, 5],
-      });
-      Object.defineProperty(navigator, "languages", {
-        get: () => ["en-US", "en"],
-      });
-      window.navigator.chrome = {};
-      Object.defineProperty(navigator, "permissions", {
-        get: () => ({ query: () => Promise.resolve({ state: "granted" }) }),
-      });
-    });
-
-    // 加载页面
-    await page.goto(SEARCH_URL, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-
-    // 模拟人类行为
-    await sleep(2000 + Math.random() * 3000);
-    await page.evaluate(() => window.scrollBy(0, 200));
-
-    const html = await page.content();
-    await browser.close();
-
-    const $ = cheerio.load(html);
+    const $ = cheerio.load(response.data);
     const $items = $(".post-standard");
     const games = [];
 
@@ -171,7 +120,6 @@ async function searchGames(keyword) {
     }
   } catch (err) {
     console.error("❌ 搜索失败:", err.message);
-    if (browser) await browser.close().catch(() => {});
     const cached = readCache(keyword);
     if (cached) {
       return {
