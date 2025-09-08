@@ -1,4 +1,11 @@
 // main.js
+process.on("uncaughtException", (error) => {
+  console.error("未捕获的异常:", error);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("未处理的 Promise 拒绝:", reason);
+});
 
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const { crawlIfUpdated } = require("./crawler");
@@ -10,9 +17,10 @@ const https = require("https");
 const http = require("http");
 const { URL } = require("url");
 const axios = require("axios");
+
 // 获取用户数据目录作为缓存根目录
-const userDataPath = app.getPath('userData');
-const cacheDir = path.join(userDataPath, 'cache');
+const userDataPath = app.getPath("userData");
+const cacheDir = path.join(userDataPath, "cache");
 
 const { Menu } = require("electron");
 // 创建一个空菜单
@@ -27,11 +35,12 @@ function createWindow() {
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"), // 启用预加载脚本
+      preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
-      contextIsolation: true, // 上下文隔离
+      contextIsolation: true,
     },
   });
+
   // 加载本地 HTML 文件
   mainWindow.loadFile("index.html");
   // 打开开发者工具（调试用）
@@ -40,10 +49,12 @@ function createWindow() {
   // 将窗口添加到窗口数组中
   windows.push(mainWindow);
 
-  // 监听窗口关闭事件，从数组中移除
+  // 监听窗口关闭事件 - 直接关闭，不隐藏
   mainWindow.on("closed", () => {
     windows = windows.filter((win) => win !== mainWindow);
   });
+
+  return mainWindow;
 }
 
 // 创建详情页窗口
@@ -67,7 +78,7 @@ function createDetailWindow(url) {
   // 将窗口添加到窗口数组中
   windows.push(detailWindow);
 
-  // 监听窗口关闭事件，从数组中移除
+  // 监听窗口关闭事件 - 直接关闭，不隐藏
   detailWindow.on("closed", () => {
     windows = windows.filter((win) => win !== detailWindow);
   });
@@ -76,28 +87,46 @@ function createDetailWindow(url) {
 }
 
 // 当 Electron 完成初始化后，创建窗口
-app.whenReady().then(() => {
-  createWindow();
-  // macOS 点击 dock 图标重新打开窗口
-  app.on("activate", function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+app
+  .whenReady()
+  .then(() => {
+    try {
+      const mainWindow = createWindow();
+
+      app.on("activate", function () {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          createWindow();
+        }
+      });
+    } catch (error) {
+      console.error("创建窗口时出错:", error);
+      app.quit();
+    }
+  })
+  .catch((error) => {
+    console.error("应用启动失败:", error);
+    app.quit();
   });
+
+// 所有窗口关闭时退出应用
+app.on("window-all-closed", function () {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
 
 // 当渲染进程请求加载游戏信息时
 ipcMain.handle("load-games-from-web", async () => {
   try {
     const result = await crawlIfUpdated();
-    // 确保 result 中没有不可序列化的对象
     return {
       ...result,
-      // 如果 result 包含 Date，转为字符串
       lastCheck: result.lastCheck
         ? new Date(result.lastCheck).toISOString()
         : undefined,
     };
   } catch (err) {
-    console.error("IPC handler error:", err); // 添加日志
+    console.error("IPC handler error:", err);
     return { updated: false, data: [], error: "系统错误: " + err.message };
   }
 });
@@ -124,11 +153,6 @@ ipcMain.handle(
 ipcMain.handle("open-detail-window", async (event, url) => {
   createDetailWindow(url);
   return { success: true };
-});
-
-// 所有窗口关闭时退出应用（macOS 除外）
-app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") app.quit();
 });
 
 // 添加设置文件路径
