@@ -10,6 +10,9 @@ const https = require("https");
 const http = require("http");
 const { URL } = require("url");
 const axios = require("axios");
+// 获取用户数据目录作为缓存根目录
+const userDataPath = app.getPath('userData');
+const cacheDir = path.join(userDataPath, 'cache');
 
 const { Menu } = require("electron");
 // 创建一个空菜单
@@ -32,7 +35,7 @@ function createWindow() {
   // 加载本地 HTML 文件
   mainWindow.loadFile("index.html");
   // 打开开发者工具（调试用）
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 将窗口添加到窗口数组中
   windows.push(mainWindow);

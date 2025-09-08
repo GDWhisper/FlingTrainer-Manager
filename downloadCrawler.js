@@ -1,26 +1,38 @@
 // downloadCrawler.js - 使用直接请求的高效版本
+const { app } = require('electron'); // 添加这行导入 app
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
 const path = require("path");
 
 // 缓存目录 - 统一使用 cache 文件夹
-const CACHE_DIR = path.join(__dirname, "cache");
-if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
-const DOWNLOAD_CACHE_DIR = path.join(CACHE_DIR, "download-cache");
-if (!fs.existsSync(DOWNLOAD_CACHE_DIR)) fs.mkdirSync(DOWNLOAD_CACHE_DIR, { recursive: true });
+// 延迟初始化缓存目录
+let CACHE_DIR;
+let DOWNLOAD_CACHE_DIR;
+
+function initCacheDirs() {
+  if (!CACHE_DIR) {
+    CACHE_DIR = path.join(app.getPath('userData'), 'cache');
+    if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR);
+    DOWNLOAD_CACHE_DIR = path.join(CACHE_DIR, 'download-cache');
+    if (!fs.existsSync(DOWNLOAD_CACHE_DIR)) fs.mkdirSync(DOWNLOAD_CACHE_DIR, { recursive: true });
+  }
+  return { CACHE_DIR, DOWNLOAD_CACHE_DIR };
+}
 
 // 缓存有效期：1小时
 const CACHE_TTL = 60 * 60 * 1000;
 
 // 根据URL生成缓存文件路径
 function getCachePath(url) {
+  initCacheDirs(); // 确保缓存目录已初始化
   const urlHash = require("crypto").createHash("md5").update(url).digest("hex");
   return path.join(DOWNLOAD_CACHE_DIR, `${urlHash}.json`);
 }
 
 // 读取缓存
 function readCache(url) {
+  initCacheDirs(); // 确保缓存目录已初始化
   const cachePath = getCachePath(url);
   if (fs.existsSync(cachePath)) {
     try {
@@ -38,6 +50,7 @@ function readCache(url) {
 
 // 写入缓存
 function writeCache(url, downloadInfo) {
+  initCacheDirs(); // 确保缓存目录已初始化
   const cachePath = getCachePath(url);
   fs.writeFileSync(
     cachePath,
@@ -48,6 +61,7 @@ function writeCache(url, downloadInfo) {
 
 // 获取下载信息
 async function getDownloadInfo(downloadPageUrl) {
+  initCacheDirs(); // 确保缓存目录已初始化
   if (!downloadPageUrl || typeof downloadPageUrl !== "string") {
     return { error: "无效的下载页面链接" };
   }
