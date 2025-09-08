@@ -17,6 +17,8 @@ const https = require("https");
 const http = require("http");
 const { URL } = require("url");
 const axios = require("axios");
+const packageJson = require('./package.json');
+
 
 // 获取用户数据目录作为缓存根目录
 const userDataPath = app.getPath("userData");
@@ -31,6 +33,7 @@ Menu.setApplicationMenu(menu);
 let windows = [];
 
 function createWindow() {
+  const appVersion = packageJson.version || "0.0.0";
   const mainWindow = new BrowserWindow({
     width: 1000,
     height: 700,
@@ -38,13 +41,18 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
-    },
+    }
   });
 
   // 加载本地 HTML 文件
   mainWindow.loadFile("index.html");
   // 打开开发者工具（调试用）
   // mainWindow.webContents.openDevTools();
+
+  // 动态设置窗口标题
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.setTitle(`风灵月影 v${appVersion}`);
+  });
 
   // 将窗口添加到窗口数组中
   windows.push(mainWindow);

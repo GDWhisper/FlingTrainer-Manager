@@ -1,6 +1,6 @@
 {
   "name": "ftm",
-  "version": "0.1.2",
+  "version": "0.1.3 build 002",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
