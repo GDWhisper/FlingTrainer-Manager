@@ -802,3 +802,31 @@ if (typeof path === "undefined") {
     },
   };
 }
+
+// 拦截所有 a 标签点击事件
+document.addEventListener("click", async (event) => {
+  // 检查点击目标或其祖先是否是 <a> 标签
+  let target = event.target;
+  while (target && target !== document) {
+    if (target.tagName === "A") {
+      const href = target.getAttribute("href");
+      if (href && isExternalLink(href)) {
+        event.preventDefault(); // 阻止默认行为（在 Electron 窗口内打开）
+        try {
+          await window.api.openExternalLink(href);
+          console.log(`Opened external link: ${href}`);
+        } catch (error) {
+          console.error("Failed to open link:", error);
+        }
+        return;
+      }
+      break; // 找到 a 标签后就跳出循环
+    }
+    target = target.parentElement;
+  }
+});
+
+// 判断是否为外部链接（http/https）
+function isExternalLink(url) {
+  return url.startsWith("http://") || url.startsWith("https://");
+}

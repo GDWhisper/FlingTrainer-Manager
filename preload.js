@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("api", {
   openFolder: (folderPath) => ipcRenderer.invoke("open-folder", folderPath),
   listDownloadedFiles: (folderPath) =>
     ipcRenderer.invoke("list-downloaded-files", folderPath),
+  openExternalLink: (url) => ipcRenderer.invoke('open-external-link', url)
 });
 
 console.log("Preload script loaded"); // 添加日志以便调试
