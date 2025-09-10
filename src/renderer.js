@@ -212,13 +212,13 @@ async function loadAllGames() {
 
       result.data.forEach((game) => {
         // 防止 game.img 或 game.name 为 null/undefined
-        const img = game.img ? game.img.trim() : "pic/default.png";
+        const img = game.img ? game.img.trim() : "../pic/default.png";
         const name = game.name ? game.name.trim() : "未知游戏";
         const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
 
         html += `
     <div class="game-card" data-download-link="${link}">
-      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='pic/default.png';">
+      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='../pic/default.png';">
       <div class="info">
         <h3 title="${name}">${name}</h3>
         <button class="btn detail-btn" onclick="openDetailPage('${link}', '${name.replace(
@@ -378,9 +378,9 @@ async function performSearch() {
             <div class="game-card" data-download-link="${
               game.downloadPageLink
             }">
-              <img src="${game.img || "pic/default.png"}" alt="${
+              <img src="${game.img || "../pic/default.png"}" alt="${
                 game.name
-              }" onerror="this.onerror=null;this.src='pic/default.png';">
+              }" onerror="this.onerror=null;this.src='../pic/default.png';">
               <div class="info">
                 <h3 title="${game.name}">${game.name}</h3>
                 <button class="btn detail-btn" onclick="openDetailPage('${
@@ -842,3 +842,95 @@ document.addEventListener("click", async (event) => {
 function isExternalLink(url) {
   return url.startsWith("http://") || url.startsWith("https://");
 }
+// 动态生成首页内容
+function generateWelcomeContent() {
+  const welcomeContent = document.getElementById('welcome-content');
+  if (welcomeContent) {
+    welcomeContent.innerHTML = `
+      <p class="welcome-text">
+        1.本软件仅提供从宗门下载游戏辅助工具的便利服务。<br />
+        2.任何要求您付费下载、购买激活码或解锁本软件功能等行为均视为诈骗，切勿相信。<br />
+        3.通过任何非官方提供的软件、其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失后果自负。
+      </p>
+    `;
+  }
+}
+
+// 动态生成关于页面内容
+function generateAboutContent() {
+  const aboutContent = document.getElementById('about-content');
+  if (aboutContent) {
+    aboutContent.innerHTML = `
+      <div class="about-section">
+        <h3>作者：bilibili@禾傀</h3>
+
+        <div class="disclaimer-section">
+          <h4>软件性质</h4>
+          <p>
+            本软件（风灵月影宗）是一个免费的游戏辅助工具下载程序，其唯一功能是从
+            <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+            获取并本地管理游戏辅助工具。
+          </p>
+
+          <h4>免责声明</h4>
+
+          <div class="disclaimer-item">
+            <p class="disclaimer-title"><strong>非官方关联：</strong></p>
+            <p>
+              本软件由开发者本人独立开发，并非风灵月影(FLiNG
+              Trainer)的官方团队、合作伙伴或代理商，也与其无任何隶属关系。
+            </p>
+            <p>
+              用户从任何渠道跳转至风灵月影(FLiNG
+              Trainer)官方网站，其页面上的广告、赞助内容、付费服务或任何形式的商业收入，均与本人（本软件开发者）无任何关联。本人不从中获取任何收益，也不对其内容负责。
+            </p>
+          </div>
+
+          <div class="disclaimer-item">
+            <p class="disclaimer-title"><strong>软件责任：</strong></p>
+            <p>
+              本软件不修改、不破解、不重新分发任何软件文件。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
+              Trainer)的版权、功能性、安全性以及使用该软件所产生的任何直接或间接问题，均由该软件的原始作者和提供商承担全部责任。
+            </p>
+          </div>
+
+          <div class="disclaimer-item">
+            <p class="disclaimer-title"><strong>用户责任：</strong></p>
+            <p>
+              用户在使用本软件下载并安装风灵月影(FLiNG
+              Trainer)提供的软件前，应自行判断其合规性与安全性，并同意遵守该软件的所有授权条款。
+            </p>
+            <p>
+              如果用户通过任何非官方渠道下载、安装或运行本程序，由此导致的一切后果（包括但不限于：程序被篡改、植入病毒木马、捆绑恶意软件、数据泄露、财产损失等）均须由用户自行承担。
+            </p>  
+          </div>
+
+          <h4>支持与反馈</h4>
+          <ul>
+            <p><strong>关于本软件 (风灵月影宗)：</strong><br>
+              如有问题或建议，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
+            </p>
+            <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
+              请访问官方支持： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+            </p>
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// 在 DOMContentLoaded 事件中调用生成函数
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM 加载完成");
+  console.log("window.api:", window.api);
+
+  if (typeof window.api === "undefined") {
+    console.error("预加载脚本未正确加载，API 未定义");
+    showToast("警告：部分功能可能无法正常工作");
+  }
+  
+  // 生成首页和关于页面内容
+  generateWelcomeContent();
+  generateAboutContent();
+});

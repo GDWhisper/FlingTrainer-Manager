@@ -1,6 +1,6 @@
 {
   "name": "ftm",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "main": "./build/main.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development electron ./src/main.js",
@@ -23,8 +23,8 @@
     "cheerio": "^1.1.2"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "bilibili@禾傀",
+  "license": "CC BY-ND",
   "description": "",
   "build": {
     "productName": "风灵月影宗",
