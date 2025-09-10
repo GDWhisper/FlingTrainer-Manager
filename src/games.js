@@ -33,7 +33,7 @@ function readCache() {
         return data.data;
       }
     } catch (e) {
-      console.warn("⚠️ 缓存读取失败:", e.message);
+      console.warn("缓存读取失败:", e.message);
     }
   }
   return null;
@@ -59,11 +59,11 @@ async function fetchGames() {
   initCacheDir(); // 确保缓存目录已初始化
   const cache = readCache();
   if (cache) {
-    console.log("✅ 使用缓存数据");
+    console.log("使用缓存数据");
     return { updated: false, data: cache, fromCache: true };
   }
 
-  console.log("🔍 正在抓取首页数据...");
+  console.log("正在获取首页数据...");
 
   try {
     const response = await axios.get(TARGET_URL, {
@@ -77,7 +77,7 @@ async function fetchGames() {
 
     const $ = cheerio.load(response.data);
     const $items = $(".post-standard"); // 每个游戏条目
-    console.log(`🔍 找到 ${$items.length} 个游戏条目`);
+    console.log(`找到 ${$items.length} 个游戏条目`);
 
     const games = [];
     $items.each((i, el) => {
@@ -98,16 +98,16 @@ async function fetchGames() {
       }
     });
 
-    console.log(`✅ 成功提取 ${games.length} 个游戏`);
+    console.log(`成功提取 ${games.length} 个游戏`);
 
     if (games.length > 0) {
       writeCache(games);
       return { updated: true, data: games, fromCache: false };
     } else {
-      return { error: "未找到游戏数据，请检查网站结构", data: [] };
+      return { error: "未找到游戏数据", data: [] };
     }
   } catch (err) {
-    console.error("❌ 抓取失败:", err.message);
+    console.error("获取失败:", err.message);
     const cache = readCache();
     if (cache) {
       return {
@@ -127,7 +127,7 @@ async function crawlIfUpdated() {
     const result = await fetchGames();
     return result;
   } catch (err) {
-    console.error("❌ crawlIfUpdated 执行出错:", err);
+    console.error("crawlIfUpdated 执行出错:", err);
     return { error: "系统错误: " + err.message, data: [] };
   }
 }

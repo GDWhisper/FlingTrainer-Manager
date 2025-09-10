@@ -8,9 +8,9 @@ const buildDir = "./build";
 
 const jsFiles = [
   "main.js",
-  "crawler.js",
-  "searchCrawler.js",
-  "downloadCrawler.js",
+  "games.js",
+  "search.js",
+  "download.js",
   "preload.js",
   "renderer.js" 
 ];

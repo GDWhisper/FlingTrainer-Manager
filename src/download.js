@@ -38,11 +38,11 @@ function readCache(url) {
     try {
       const data = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
       if (Date.now() - data.timestamp < CACHE_TTL) {
-        console.log(`✅ 使用下载页面缓存数据：${url}`);
+        console.log(`使用下载页面缓存数据：${url}`);
         return data.downloadInfo;
       }
     } catch (e) {
-      console.warn("⚠️ 下载缓存读取失败:", e.message);
+      console.warn("下载缓存读取失败:", e.message);
     }
   }
   return null;
@@ -73,7 +73,7 @@ async function getDownloadInfo(downloadPageUrl) {
   }
 
   try {
-    console.log(`🔍 正在访问下载页面：${downloadPageUrl}`);
+    console.log(`正在访问下载页面：${downloadPageUrl}`);
 
     // 使用 axios 直接请求页面内容，避免启动浏览器
     const response = await axios.get(downloadPageUrl, {
@@ -95,7 +95,7 @@ async function getDownloadInfo(downloadPageUrl) {
       $("title").text().split(" - ")[0].trim() ||
       "未知游戏";
 
-    // ✅ 优先从附件表格中获取第一个下载链接
+    // 优先从附件表格中获取第一个下载链接
     let downloadLink = null;
     let downloadPassword = null;
 
@@ -177,7 +177,7 @@ async function getDownloadInfo(downloadPageUrl) {
       pageUrl: downloadPageUrl,
     };
 
-    console.log(`✅ 成功提取下载信息：${gameName}`);
+    console.log(`成功提取下载信息：${gameName}`);
 
     if (downloadLink) {
       writeCache(downloadPageUrl, downloadInfo);
@@ -186,7 +186,7 @@ async function getDownloadInfo(downloadPageUrl) {
       return { ...downloadInfo, error: "未找到下载链接", fromCache: false };
     }
   } catch (err) {
-    console.error("❌ 获取下载信息失败:", err.message);
+    console.error("获取下载信息失败:", err.message);
 
     const cached = readCache(downloadPageUrl);
     if (cached) {

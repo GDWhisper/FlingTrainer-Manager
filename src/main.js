@@ -8,9 +8,9 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
-const { crawlIfUpdated } = require("./crawler.js");
-const { searchGames } = require("./searchCrawler.js");
-const { getDownloadInfo } = require("./downloadCrawler.js");
+const { crawlIfUpdated } = require("./games.js");
+const { searchGames } = require("./search.js");
+const { getDownloadInfo } = require("./download.js");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -40,6 +40,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: false
     },
   });
 
