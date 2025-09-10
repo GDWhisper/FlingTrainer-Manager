@@ -256,26 +256,38 @@ async function loadAllGames() {
 }
 
 // 监听导航链接
-document.querySelectorAll(".nav-link").forEach((link) => {
-  link.addEventListener("click", (e) => {
+document.addEventListener('click', function(e) {
+  // 处理导航链接
+  if (e.target.classList.contains('nav-link')) {
     e.preventDefault();
-    const target = e.target.getAttribute("href").substring(1);
-
-    if (target === "website") {
+    const targetPage = e.target.getAttribute("data-page");
+    
+    if (targetPage === "website") {
       // 打开外部网站
       openExternalUrl("https://flingtrainer.com");
-    } else {
-      navigateTo(target);
+    } else if (targetPage) {
+      navigateTo(targetPage);
     }
-  });
-});
-
-// 监听页签按钮
-document.querySelectorAll(".tab-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const tabId = btn.getAttribute("data-tab");
-    showTab(tabId);
-  });
+    return;
+  }
+  
+  // 处理页签按钮
+  if (e.target.classList.contains('tab-btn')) {
+    const tabId = e.target.getAttribute("data-tab");
+    if (tabId) {
+      showTab(tabId);
+    }
+    return;
+  }
+  
+  // 处理打开文件夹按钮
+  if (e.target.classList.contains("open-folder-btn")) {
+    const folderPath = e.target.getAttribute("data-folder");
+    if (folderPath) {
+      openDownloadFolder(folderPath);
+    }
+    return;
+  }
 });
 
 // 浮动提示函数

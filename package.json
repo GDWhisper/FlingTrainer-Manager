@@ -1,17 +1,22 @@
 {
   "name": "ftm",
   "version": "0.1.7",
-  "main": "src/main.js",
+  "main": "./build/main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win",
-    "clean": "rm -rf node_modules && rm package-lock.json"
+    "start": "cross-env NODE_ENV=development electron ./src/main.js",
+    "clean": "node scripts/clean.js",
+    "build": "node scripts/obfuscate.js && node scripts/minify-html-css.js && node scripts/prepare-build.js",
+    "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
+    "asar": "^3.2.0",
+    "clean-css-cli": "^5.6.3",
+    "cross-env": "^10.0.0",
+    "crypto-js": "^4.2.0",
     "electron": "^37.4.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "html-minifier-terser": "^7.2.0",
+    "javascript-obfuscator": "^4.1.1"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -24,21 +29,27 @@
   "build": {
     "productName": "风灵月影宗",
     "appId": "com.hekui.flingtrainerdownloader",
+    "copyright": "Copyright © 2025",
+    "asar": true,
     "electronDownload": {
       "mirror": "https://npmmirror.com/mirrors/electron/"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "icon.ico"
     },
     "nsis": {
-      "allowToChangeInstallationDirectory": true,
       "oneClick": false,
-      "perMachine": false,
-      "deleteAppDataOnUninstall": false
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
     },
     "files": [
-      "src/",
-      "node_modules/"
-    ]
+      "build/**/*",
+      "icon.ico",
+      "pic/**/*"
+    ],
+    "directories": {
+      "output": "dist" 
+    }
   }
 }

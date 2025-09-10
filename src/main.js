@@ -44,7 +44,17 @@ function createWindow() {
   });
 
   // 加载本地 HTML 文件
-  mainWindow.loadFile("src/index.html");
+  const srcIndexPath = path.join(__dirname, "index.html");
+  const buildIndexPath = path.join(__dirname, "..", "build", "index.html");
+
+  if (fs.existsSync(srcIndexPath)) {
+    mainWindow.loadFile(srcIndexPath);
+  } else if (fs.existsSync(buildIndexPath)) {
+    mainWindow.loadFile(buildIndexPath);
+  } else {
+    // 如果都找不到，会抛出错误
+    mainWindow.loadFile(srcIndexPath); // 让 Electron 抛出原始错误
+  }
   // 打开开发者工具（调试用）
   // mainWindow.webContents.openDevTools();
 
