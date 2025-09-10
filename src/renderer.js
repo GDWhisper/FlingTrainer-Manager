@@ -102,7 +102,7 @@ async function loadDownloadedFiles() {
           <div class="tool-icon">
             <img src="${
               file.image
-            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src='pic/default.png';">
+            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src='../pic/default.png';">
           </div>
           <div class="tool-info">
             <h4>${fileNameWithoutExt}</h4>

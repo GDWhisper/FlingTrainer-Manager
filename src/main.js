@@ -8,7 +8,7 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
-const { crawlIfUpdated } = require("./crawler");
+const { crawlIfUpdated } = require("./crawler.js");
 const { searchGames } = require("./searchCrawler.js");
 const { getDownloadInfo } = require("./downloadCrawler.js");
 const path = require("path");
@@ -17,8 +17,7 @@ const https = require("https");
 const http = require("http");
 const { URL } = require("url");
 const axios = require("axios");
-const packageJson = require('./package.json');
-
+const packageJson = require("../package.json");
 
 // 获取用户数据目录作为缓存根目录
 const userDataPath = app.getPath("userData");
@@ -41,17 +40,17 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
-    }
+    },
   });
 
   // 加载本地 HTML 文件
-  mainWindow.loadFile("index.html");
+  mainWindow.loadFile("src/index.html");
   // 打开开发者工具（调试用）
   // mainWindow.webContents.openDevTools();
 
   // 动态设置窗口标题
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.setTitle(`风灵月影宗 v${appVersion}`);
+  mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow.setTitle(`风灵月影 v${appVersion}`);
   });
 
   // 将窗口添加到窗口数组中
@@ -408,7 +407,7 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
         modified: stat.mtime,
         isExecutable: ext === ".exe",
         isCompressed: ext === ".zip" || ext === ".rar" || ext === ".7z",
-        image: gameImage || "pic/default.png",
+        image: gameImage || "../pic/default.png",
       };
     });
 
@@ -416,5 +415,15 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
   } catch (err) {
     console.error("读取下载文件夹失败:", err);
     return { success: false, error: err.message };
+  }
+});
+// 监听来自渲染进程的打开外部链接请求
+ipcMain.handle("open-external-link", async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to open external link:", error);
+    return { success: false, error: error.message };
   }
 });
