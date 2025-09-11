@@ -20,6 +20,25 @@ import { crawlIfUpdated } from "./games.js";
 import { searchGames } from "./search.js";
 import { getDownloadInfo } from "./download.js";
 
+// 在 src/main/index.js 中添加资源路径处理
+const isDev = process.env.NODE_ENV === 'development';
+const getResourcesPath = () => {
+  if (isDev) {
+    return path.join(__dirname, '../renderer');
+  } else {
+    return path.join(__dirname, '../renderer');
+  }
+};
+
+function getDefaultImage() {
+  if (process.env.NODE_ENV === 'development') {
+    return '/pic/default.png'; // 开发环境使用 public 目录下的路径
+  } else {
+    // 生产环境使用相对于应用根目录的路径
+    return './pic/default.png';
+  }
+}
+
 // 获取用户数据目录作为缓存根目录
 const userDataPath = app.getPath("userData");
 const cacheDir = path.join(userDataPath, "cache");
@@ -41,7 +60,9 @@ function createWindow() {
       preload: path.join(__dirname, "../preload/index.js"),
       nodeIntegration: false,
       contextIsolation: true,
-      devTools: false
+      spellcheck: false,
+      // devTools: process.env.NODE_ENV === 'development',
+      // devTools:true,
     },
   });
 
@@ -79,7 +100,7 @@ function createDetailWindow(url) {
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "../preload/index.js"),
       nodeIntegration: false,
       contextIsolation: true,
     },
@@ -416,7 +437,7 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
         modified: stat.mtime,
         isExecutable: ext === ".exe",
         isCompressed: ext === ".zip" || ext === ".rar" || ext === ".7z",
-        image: gameImage || "./assets/pic/default.png",
+        image: gameImage || getDefaultImage(),
       };
     });
 

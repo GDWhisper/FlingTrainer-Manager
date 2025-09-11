@@ -1,29 +1,30 @@
 // vite.config.js
-import { defineConfig } from 'electron-vite';
-import bytecodePlugin from 'vite-plugin-bytecode';
+import { defineConfig } from "electron-vite";
+import bytecodePlugin from "vite-plugin-bytecode";
+import { resolve } from "path";
 
 export default defineConfig({
   main: {
-    plugins: [
-      bytecodePlugin() // 保护主进程代码
-    ]
+    plugins: [bytecodePlugin()],
   },
   preload: {
-    plugins: [
-      bytecodePlugin() // 保护预加载脚本
-    ]
+    plugins: [bytecodePlugin()],
   },
   renderer: {
-    plugins: [
-      bytecodePlugin() // 保护渲染进程代码
-    ],
-    // 显式指定入口，确保 Vite 正确打包和 HMR
+    plugins: [bytecodePlugin()],
     build: {
       rollupOptions: {
         input: {
-          index: 'src/renderer/index.html' // 指定 HTML 入口
-        }
-      }
-    }
-  }
+          index: "src/renderer/index.html",
+        },
+      },
+    },
+    // 确保静态资源被正确处理
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src/renderer"),
+        "@assets": resolve(__dirname, "src/renderer/assets"),
+      },
+    },
+  },
 });

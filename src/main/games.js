@@ -22,7 +22,8 @@ function initCacheDir() {
   return { CACHE_DIR, CACHE_FILE };
 }
 
-const LOCK_TIME = 60 * 60 * 1000; // 缓存有效期：1小时
+// 缓存有效期
+const LOCK_TIME = 30 * 60 * 1000;
 
 // ==================== 缓存读写 ====================
 function readCache() {

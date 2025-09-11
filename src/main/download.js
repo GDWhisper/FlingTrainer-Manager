@@ -20,8 +20,8 @@ function initCacheDirs() {
   return { CACHE_DIR, DOWNLOAD_CACHE_DIR };
 }
 
-// 缓存有效期：1小时
-const CACHE_TTL = 60 * 60 * 1000;
+// 缓存有效期
+const CACHE_TTL = 10 * 60 * 1000;
 
 // 根据URL生成缓存文件路径
 function getCachePath(url) {

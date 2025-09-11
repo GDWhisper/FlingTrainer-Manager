@@ -48,8 +48,7 @@
     },
     "files": [
       "out/**/*",
-      "icon.ico",
-      "pic/**/*"
+      "icon.ico"
     ],
     "directories": {
       "output": "dist"
