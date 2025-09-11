@@ -530,6 +530,9 @@ body {
   background: #f9f9f9;
   border-radius: 8px;
   border: 1px solid #eee;
+  /* 添加这行确保容器有足够宽度 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .setting-item label {
@@ -541,12 +544,18 @@ body {
 
 .setting-item input[type="text"] {
   width: 100%;
+  /* 添加最小宽度确保输入框不会过小 */
+  min-width: 300px;
   max-width: 500px;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
   margin-bottom: 10px;
+  /* 添加显式的盒模型属性 */
+  box-sizing: border-box;
+  /* 确保高度不会被压缩 */
+  min-height: 40px;
 }
 
 .setting-item .btn {
@@ -558,6 +567,8 @@ body {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.3s;
+  /* 添加显式的显示属性 */
+  display: inline-block;
 }
 
 .setting-item .btn:hover {
@@ -568,6 +579,36 @@ body {
   color: #777;
   font-size: 13px;
   margin-top: 5px;
+}
+
+/* 为下载文件夹设置添加特殊样式 */
+#download-folder {
+  width: 100%;
+  min-width: 300px;
+  max-width: 500px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  min-height: 40px;
+}
+
+#select-folder-btn {
+  background: #007acc;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+  display: inline-block;
+}
+
+#select-folder-btn:hover {
+  background: #005a99;
 }
 
 /* 下载任务样式 */
