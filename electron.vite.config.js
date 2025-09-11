@@ -1,6 +1,5 @@
-// vite.config.js
-import { defineConfig } from "electron-vite";
-import bytecodePlugin from "vite-plugin-bytecode";
+// 
+import { defineConfig, bytecodePlugin } from 'electron-vite';
 import { resolve } from "path";
 
 export default defineConfig({
