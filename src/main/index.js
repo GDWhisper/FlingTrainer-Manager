@@ -61,8 +61,9 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       spellcheck: false,
+      sandbox: false,
       // devTools: process.env.NODE_ENV === 'development',
-      // devTools:true,
+      devTools:false,
     },
   });
 

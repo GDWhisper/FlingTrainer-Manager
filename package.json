@@ -5,21 +5,23 @@
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
+    "preview": "electron-vite preview",
     "build": "electron-vite build",
     "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
-    "electron": "^37.4.0",
-    "electron-vite": "^2.0.0",
-    "vite": "^5.4.0",
-    "vite-plugin-bytecode": "^0.0.0",
-    "electron-builder": "^25.1.8",
+    "@types/node": "^22.0.0",
+    "clean-css-cli": "^5.6.3",
     "cross-env": "^10.0.0",
     "crypto-js": "^4.2.0",
-    "clean-css-cli": "^5.6.3",
+    "electron": "^37.4.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.0.0",
     "html-minifier-terser": "^7.2.0",
     "javascript-obfuscator": "^4.1.1",
-    "@types/node": "^22.0.0"
+    "vite": "^5.4.0",
+    "vite-plugin-bytecode": "^0.0.0",
+    "vite-plugin-electron": "^0.29.0"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -28,7 +30,7 @@
   "keywords": [],
   "author": "bilibili@禾傀",
   "license": "CC BY-ND",
-  "description": "An Electron-based desktop tool for productivity. Licensed under CC BY-ND 4.0. You may share and use this software with appropriate credit, but may not modify or create derivative works. 风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。根据 Creative Commons Attribution-NoDerivatives 4.0 International 许可证授权。您可以自由共享本软件，但必须提供适当的署名，并且不得以任何形式修改、转换或以本作品为基础进行创作。",
+  "description": "An Electron-based desktop tool for productivity. Licensed under CC BY-ND 4.0. You may share and use this software with appropriate credit, but may not modify or create derivative works. 风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。根据 Creative Commons Attribution-NoDerivatives 4.0 International 许可证授权。您可以自由分享和使用本软件，但必须提供适当的署名，并且不得以任何形式修改、重新打包或以本作品为基础进行创作。",
   "build": {
     "productName": "风灵月影宗",
     "appId": "com.hekui.flingtrainerdownloader",

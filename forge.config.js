@@ -21,9 +21,9 @@ module.exports = {
       [
         '@electron-forge/plugin-webpack',
         {
-          mainConfig: './vite.config.js',
+          mainConfig: './electron.vite.config.js',
           renderer: {
-            config: './vite.config.js',
+            config: './electron.vite.config.js',
             entryPoints: [
               {
                 html: './src/index.html',
