@@ -19,8 +19,8 @@ function initCacheDir() {
   return CACHE_DIR;
 }
 
-// 缓存有效期：1 小时
-const CACHE_TTL = 60 * 60 * 1000;
+// 缓存有效期
+const CACHE_TTL = 30 * 60 * 1000;
 
 // 根据关键词生成缓存文件路径
 function getCachePath(keyword) {

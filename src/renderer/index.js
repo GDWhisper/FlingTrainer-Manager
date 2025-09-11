@@ -1,5 +1,4 @@
 // renderer.js
-
 // 页面切换函数
 function navigateTo(pageId) {
   document.querySelectorAll(".page").forEach((page) => {
@@ -102,7 +101,7 @@ async function loadDownloadedFiles() {
           <div class="tool-icon">
             <img src="${
               file.image
-            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
+            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src=getDefaultImage();">
           </div>
           <div class="tool-info">
             <h4>${fileNameWithoutExt}</h4>
@@ -212,13 +211,13 @@ async function loadAllGames() {
 
       result.data.forEach((game) => {
         // 防止 game.img 或 game.name 为 null/undefined
-        const img = game.img ? game.img.trim() : "./assets/pic/default.png";
+        const img = game.img ? game.img.trim() : getDefaultImage();
         const name = game.name ? game.name.trim() : "未知游戏";
         const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
 
         html += `
     <div class="game-card" data-download-link="${link}">
-      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
+      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src=getDefaultImage();">
       <div class="info">
         <h3 title="${name}">${name}</h3>
         <button class="btn detail-btn" onclick="openDetailPage('${link}', '${name.replace(
@@ -378,9 +377,9 @@ async function performSearch() {
             <div class="game-card" data-download-link="${
               game.downloadPageLink
             }">
-              <img src="${game.img || "./assets/pic/default.png"}" alt="${
+              <img src="${game.img || getDefaultImage()}" alt="${
                 game.name
-              }" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
+              }" onerror="this.onerror=null;this.src=getDefaultImage();">
               <div class="info">
                 <h3 title="${game.name}">${game.name}</h3>
                 <button class="btn detail-btn" onclick="openDetailPage('${
@@ -889,7 +888,7 @@ function generateAboutContent() {
           <div class="disclaimer-item">
             <p class="disclaimer-title"><strong>软件责任：</strong></p>
             <p>
-              本软件不修改、不破解、不重新分发任何软件文件。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
+              本软件不修改、不破解、不重新分发任何软件文件，不收集任何用户数据。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
               Trainer)的版权、功能性、安全性以及使用该软件所产生的任何直接或间接问题，均由该软件的原始作者和提供商承担全部责任。
             </p>
           </div>
@@ -908,10 +907,10 @@ function generateAboutContent() {
           <h4>支持与反馈</h4>
           <ul>
             <p><strong>关于本软件 (风灵月影宗)：</strong><br>
-              如有问题或建议，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
+              如果您有问题、建议，或希望支持本软件的开发，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
             </p>
             <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
-              请访问官方支持： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+              如果您希望支持风灵月影，请访问其官方网站： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
             </p>
           </ul>
         </div>
@@ -934,3 +933,32 @@ document.addEventListener("DOMContentLoaded", () => {
   generateWelcomeContent();
   generateAboutContent();
 });
+
+// 获取默认图片路径的函数
+function getDefaultImage() {
+  if (process.env.NODE_ENV === 'development') {
+    return '/pic/default.png'; // 开发环境使用 public 目录下的路径
+  } else {
+    // 生产环境使用相对于应用根目录的路径
+    return './pic/default.png';
+  }
+}
+
+// 将函数暴露到全局作用域，以便HTML中的onclick可以访问
+window.openDetailPage = openDetailPage;
+window.downloadGame = downloadGame;
+window.navigateTo = navigateTo;
+window.showTab = showTab;
+window.performSearch = performSearch;
+window.clearSearchInput = clearSearchInput;
+window.launchTool = launchTool;
+window.openDownloadFolder = openDownloadFolder;
+window.formatFileSize = formatFileSize;
+window.formatDate = formatDate;
+window.loadAllGames = loadAllGames;
+window.loadDownloadedFiles = loadDownloadedFiles;
+window.loadSettings = loadSettings;
+window.selectDownloadFolder = selectDownloadFolder;
+window.saveSettings = saveSettings;
+window.getDefaultImage = getDefaultImage;
+window.showToast = showToast;
