@@ -37,11 +37,11 @@ function readCache(keyword) {
     try {
       const data = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
       if (Date.now() - data.timestamp < CACHE_TTL) {
-        console.log(`✅ 使用缓存数据：${keyword}`);
+        console.log(`使用缓存数据：${keyword}`);
         return data.games;
       }
     } catch (e) {
-      console.warn("⚠️ 缓存读取失败:", e.message);
+      console.warn("缓存读取失败:", e.message);
     }
   }
   return null;
@@ -76,8 +76,8 @@ async function searchGames(keyword) {
   )}`;
 
   try {
-    console.log(`🔍 正在搜索：${keyword}`);
-    console.log(`🌐 访问：${SEARCH_URL}`);
+    console.log(`正在搜索：${keyword}`);
+    console.log(`访问：${SEARCH_URL}`);
 
     const response = await axios.get(SEARCH_URL, {
       headers: {
@@ -110,7 +110,7 @@ async function searchGames(keyword) {
       }
     });
 
-    console.log(`✅ 成功提取 ${games.length} 个游戏`);
+    console.log(`成功提取 ${games.length} 个游戏`);
 
     if (games.length > 0) {
       writeCache(keyword, games);
@@ -119,7 +119,7 @@ async function searchGames(keyword) {
       return { error: "未找到相关游戏", data: [] };
     }
   } catch (err) {
-    console.error("❌ 搜索失败:", err.message);
+    console.error("搜索失败:", err.message);
     const cached = readCache(keyword);
     if (cached) {
       return {
@@ -133,5 +133,5 @@ async function searchGames(keyword) {
   }
 }
 
-// ✅ 导出函数供 Electron 调用
-module.exports = { searchGames };
+// 导出函数
+export { searchGames };

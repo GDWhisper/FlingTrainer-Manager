@@ -8,16 +8,17 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
-const { crawlIfUpdated } = require("./games.js");
-const { searchGames } = require("./search.js");
-const { getDownloadInfo } = require("./download.js");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
 const { URL } = require("url");
 const axios = require("axios");
-const packageJson = require("../package.json");
+const packageJson = require("../../package.json");
+
+import { crawlIfUpdated } from "./games.js";
+import { searchGames } from "./search.js";
+import { getDownloadInfo } from "./download.js";
 
 // 获取用户数据目录作为缓存根目录
 const userDataPath = app.getPath("userData");
@@ -37,7 +38,7 @@ function createWindow() {
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "../preload/index.js"),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: false
@@ -45,16 +46,13 @@ function createWindow() {
   });
 
   // 加载本地 HTML 文件
-  const srcIndexPath = path.join(__dirname, "index.html");
-  const buildIndexPath = path.join(__dirname, "..", "build", "index.html");
-
-  if (fs.existsSync(srcIndexPath)) {
-    mainWindow.loadFile(srcIndexPath);
-  } else if (fs.existsSync(buildIndexPath)) {
-    mainWindow.loadFile(buildIndexPath);
+  //根据环境加载不同入口
+   if (process.env.NODE_ENV === 'development') {
+    // 开发环境 → 从 Vite dev server 加载
+    mainWindow.loadURL('http://localhost:5173')
   } else {
-    // 如果都找不到，会抛出错误
-    mainWindow.loadFile(srcIndexPath); // 让 Electron 抛出原始错误
+    // 生产环境 → 从打包后的 renderer/index.html 加载
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
   // 打开开发者工具（调试用）
   // mainWindow.webContents.openDevTools();
@@ -418,7 +416,7 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
         modified: stat.mtime,
         isExecutable: ext === ".exe",
         isCompressed: ext === ".zip" || ext === ".rar" || ext === ".7z",
-        image: gameImage || "../pic/default.png",
+        image: gameImage || "./assets/pic/default.png",
       };
     });
 
