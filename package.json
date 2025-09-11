@@ -1,12 +1,13 @@
 {
   "name": "ftm",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "./out/main/index.js",
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "preview": "electron-vite preview",
     "build": "electron-vite build",
+    "postbuild": "node scripts/process-renderer-assets.js",
     "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
