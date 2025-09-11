@@ -18,7 +18,16 @@ contextBridge.exposeInMainWorld("api", {
   openFolder: (folderPath) => ipcRenderer.invoke("open-folder", folderPath),
   listDownloadedFiles: (folderPath) =>
     ipcRenderer.invoke("list-downloaded-files", folderPath),
-  openExternalLink: (url) => ipcRenderer.invoke('open-external-link', url)
+  openExternalLink: (url) => ipcRenderer.invoke("open-external-link", url),
+  // 新增的安全 API
+  getDefaultImage: () => ipcRenderer.invoke("get-default-image"),
+  formatFileSize: (bytes) => ipcRenderer.invoke("format-file-size", bytes),
+  formatDate: (date) => ipcRenderer.invoke("format-date", date),
+  launchTool: (filePath) => ipcRenderer.invoke("launch-tool", filePath),
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  // 内容获取 API
+  getWelcomeContent: () => ipcRenderer.invoke("get-welcome-content"),
+  getAboutContent: () => ipcRenderer.invoke("get-about-content"),
 });
 
 console.log("Preload script loaded"); // 添加日志以便调试

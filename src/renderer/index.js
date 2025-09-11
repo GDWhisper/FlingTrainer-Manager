@@ -87,27 +87,32 @@ async function loadDownloadedFiles() {
       return;
     }
 
+    // 预先格式化文件大小和日期
+    const formattedFiles = await Promise.all(
+      result.files.map(async (file) => {
+        return {
+          ...file,
+          formattedSize: await formatFileSize(file.size),
+          formattedDate: await formatDate(file.modified),
+          fileNameWithoutExt: path.basename(file.name, path.extname(file.name)),
+        };
+      })
+    );
+
     // 生成文件列表HTML
     let html = '<div class="installed-tools-list">';
 
-    result.files.forEach((file) => {
-      const fileNameWithoutExt = path.basename(
-        file.name,
-        path.extname(file.name)
-      );
-
+    formattedFiles.forEach((file) => {
       html += `
         <div class="tool-item">
           <div class="tool-icon">
-            <img src="${
-              file.image
-            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src=getDefaultImage();">
+            <img src="${file.image}" alt="${file.fileNameWithoutExt}" onerror="this.onerror=null;this.src=getDefaultImage();">
           </div>
           <div class="tool-info">
-            <h4>${fileNameWithoutExt}</h4>
+            <h4>${file.fileNameWithoutExt}</h4>
             <p class="file-name">${file.name}</p>
-            <p class="file-size">大小: ${formatFileSize(file.size)}</p>
-            <p class="file-date">修改时间: ${formatDate(file.modified)}</p>
+            <p class="file-size">大小: ${file.formattedSize}</p>
+            <p class="file-date">修改时间: ${file.formattedDate}</p>
           </div>
           <div class="tool-actions">
       `;
@@ -148,11 +153,14 @@ async function loadDownloadedFiles() {
 }
 
 // 启动工具函数
-function launchTool(filePath) {
+async function launchTool(filePath) {
   try {
-    // 使用 shell.openPath 启动可执行文件
-    window.api.openFolder(filePath);
-    showToast("正在启动工具...");
+    const result = await window.api.launchTool(filePath);
+    if (result.success) {
+      showToast("正在启动工具...");
+    } else {
+      showToast("启动工具失败: " + result.error);
+    }
   } catch (err) {
     console.error("启动工具失败:", err);
     showToast("启动工具失败: " + err.message);
@@ -160,19 +168,12 @@ function launchTool(filePath) {
 }
 
 // 格式化文件大小
-function formatFileSize(bytes) {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+async function formatFileSize(bytes) {
+  return await window.api.formatFileSize(bytes);
 }
-
 // 格式化日期
-function formatDate(date) {
-  return new Date(date).toLocaleString("zh-CN");
+async function formatDate(date) {
+  return await window.api.formatDate(date);
 }
 
 // 加载所有游戏数据（带防抖处理）
@@ -255,12 +256,12 @@ async function loadAllGames() {
 }
 
 // 监听导航链接
-document.addEventListener('click', function(e) {
+document.addEventListener("click", function (e) {
   // 处理导航链接
-  if (e.target.classList.contains('nav-link')) {
+  if (e.target.classList.contains("nav-link")) {
     e.preventDefault();
     const targetPage = e.target.getAttribute("data-page");
-    
+
     if (targetPage === "website") {
       // 打开外部网站
       openExternalUrl("https://flingtrainer.com");
@@ -269,16 +270,16 @@ document.addEventListener('click', function(e) {
     }
     return;
   }
-  
+
   // 处理页签按钮
-  if (e.target.classList.contains('tab-btn')) {
+  if (e.target.classList.contains("tab-btn")) {
     const tabId = e.target.getAttribute("data-tab");
     if (tabId) {
       showTab(tabId);
     }
     return;
   }
-  
+
   // 处理打开文件夹按钮
   if (e.target.classList.contains("open-folder-btn")) {
     const folderPath = e.target.getAttribute("data-folder");
@@ -841,81 +842,48 @@ document.addEventListener("click", async (event) => {
 function isExternalLink(url) {
   return url.startsWith("http://") || url.startsWith("https://");
 }
+
 // 动态生成首页内容
-function generateWelcomeContent() {
-  const welcomeContent = document.getElementById('welcome-content');
+async function generateWelcomeContent() {
+  const welcomeContent = document.getElementById("welcome-content");
   if (welcomeContent) {
-    welcomeContent.innerHTML = `
-      <p class="welcome-text">
-        1.本软件仅提供从宗门下载游戏辅助工具的便利服务。<br />
-        2.任何要求您付费下载、购买激活码或解锁本软件功能等行为均视为诈骗，切勿相信。<br />
-        3.通过任何非官方提供的软件、其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失后果自负。
-      </p>
-    `;
+    try {
+      const content = await window.api.getWelcomeContent();
+      welcomeContent.innerHTML = content;
+    } catch (error) {
+      console.error("获取首页内容失败:", error);
+      welcomeContent.innerHTML = "<p>内容加载失败</p>";
+    }
   }
 }
 
 // 动态生成关于页面内容
-function generateAboutContent() {
-  const aboutContent = document.getElementById('about-content');
+async function generateAboutContent() {
+  const aboutContent = document.getElementById("about-content");
   if (aboutContent) {
-    aboutContent.innerHTML = `
-      <div class="about-section">
-        <h3>作者：bilibili@禾傀</h3>
+    try {
+      const content = await window.api.getAboutContent();
+      aboutContent.innerHTML = content;
 
-        <div class="disclaimer-section">
-          <h4>软件性质</h4>
-          <p>
-            本软件（风灵月影宗）是一个免费的游戏辅助工具下载程序，其唯一功能是从
-            <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
-            获取并本地管理游戏辅助工具。
-          </p>
-
-          <h4>免责声明</h4>
-
-          <div class="disclaimer-item">
-            <p class="disclaimer-title"><strong>非官方关联：</strong></p>
-            <p>
-              本软件由开发者本人独立开发，并非风灵月影(FLiNG
-              Trainer)的官方团队、合作伙伴或代理商，也与其无任何隶属关系。
-            </p>
-            <p>
-              用户从任何渠道跳转至风灵月影(FLiNG
-              Trainer)官方网站，其页面上的广告、赞助内容、付费服务或任何形式的商业收入，均与本人（本软件开发者）无任何关联。本人不从中获取任何收益，也不对其内容负责。
-            </p>
-          </div>
-
-          <div class="disclaimer-item">
-            <p class="disclaimer-title"><strong>软件责任：</strong></p>
-            <p>
-              本软件不修改、不破解、不重新分发任何软件文件，不收集任何用户数据。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
-              Trainer)的版权、功能性、安全性以及使用该软件所产生的任何直接或间接问题，均由该软件的原始作者和提供商承担全部责任。
-            </p>
-          </div>
-
-          <div class="disclaimer-item">
-            <p class="disclaimer-title"><strong>用户责任：</strong></p>
-            <p>
-              用户在使用本软件下载并安装风灵月影(FLiNG
-              Trainer)提供的软件前，应自行判断其合规性与安全性，并同意遵守该软件的所有授权条款。
-            </p>
-            <p>
-              如果用户通过任何非官方渠道下载、安装或运行本程序，由此导致的一切后果（包括但不限于：程序被篡改、植入病毒木马、捆绑恶意软件、数据泄露、财产损失等）均须由用户自行承担。
-            </p>  
-          </div>
-
-          <h4>支持与反馈</h4>
-          <ul>
-            <p><strong>关于本软件 (风灵月影宗)：</strong><br>
-              如果您有问题、建议，或希望支持本软件的开发，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
-            </p>
-            <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
-              如果您希望支持风灵月影，请访问其官方网站： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
-            </p>
-          </ul>
-        </div>
-      </div>
-    `;
+      // 重新绑定关于页面中的链接点击事件
+      const links = aboutContent.querySelectorAll("a");
+      links.forEach((link) => {
+        link.addEventListener("click", async (e) => {
+          e.preventDefault();
+          const href = link.getAttribute("href");
+          if (href) {
+            try {
+              await window.api.openExternal(href);
+            } catch (error) {
+              console.error("打开链接失败:", error);
+            }
+          }
+        });
+      });
+    } catch (error) {
+      console.error("获取关于页面内容失败:", error);
+      aboutContent.innerHTML = "<p>内容加载失败</p>";
+    }
   }
 }
 
@@ -928,20 +896,15 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("预加载脚本未正确加载，API 未定义");
     showToast("警告：部分功能可能无法正常工作");
   }
-  
+
   // 生成首页和关于页面内容
   generateWelcomeContent();
   generateAboutContent();
 });
 
 // 获取默认图片路径的函数
-function getDefaultImage() {
-  if (process.env.NODE_ENV === 'development') {
-    return '/pic/default.png'; // 开发环境使用 public 目录下的路径
-  } else {
-    // 生产环境使用相对于应用根目录的路径
-    return './pic/default.png';
-  }
+async function getDefaultImage() {
+  return await window.api.getDefaultImage();
 }
 
 // 将函数暴露到全局作用域，以便HTML中的onclick可以访问

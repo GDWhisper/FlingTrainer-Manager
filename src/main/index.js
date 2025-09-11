@@ -21,21 +21,21 @@ import { searchGames } from "./search.js";
 import { getDownloadInfo } from "./download.js";
 
 // 在 src/main/index.js 中添加资源路径处理
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === "development";
 const getResourcesPath = () => {
   if (isDev) {
-    return path.join(__dirname, '../renderer');
+    return path.join(__dirname, "../renderer");
   } else {
-    return path.join(__dirname, '../renderer');
+    return path.join(__dirname, "../renderer");
   }
 };
 
 function getDefaultImage() {
-  if (process.env.NODE_ENV === 'development') {
-    return '/pic/default.png'; // 开发环境使用 public 目录下的路径
+  if (process.env.NODE_ENV === "development") {
+    return "/pic/default.png"; // 开发环境使用 public 目录下的路径
   } else {
     // 生产环境使用相对于应用根目录的路径
-    return './pic/default.png';
+    return "./pic/default.png";
   }
 }
 
@@ -62,26 +62,26 @@ function createWindow() {
       contextIsolation: true,
       spellcheck: false,
       sandbox: false,
-      // devTools: process.env.NODE_ENV === 'development',
-      devTools:false,
+      devTools: process.env.NODE_ENV === 'development',
+      // devTools: false,
     },
   });
 
   // 加载本地 HTML 文件
   //根据环境加载不同入口
-   if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     // 开发环境 → 从 Vite dev server 加载
-    mainWindow.loadURL('http://localhost:5173')
+    mainWindow.loadURL("http://localhost:5173");
   } else {
     // 生产环境 → 从打包后的 renderer/index.html 加载
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
   // 打开开发者工具（调试用）
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   // 动态设置窗口标题
   mainWindow.webContents.on("did-finish-load", () => {
-    mainWindow.setTitle(`风灵月影 v${appVersion}`);
+    mainWindow.setTitle(`风灵月影宗 v${appVersion}`);
   });
 
   // 将窗口添加到窗口数组中
@@ -457,4 +457,114 @@ ipcMain.handle("open-external-link", async (event, url) => {
     console.error("Failed to open external link:", error);
     return { success: false, error: error.message };
   }
+});
+
+// 添加获取默认图片路径的 IPC 处理
+ipcMain.handle("get-default-image", async () => {
+  return getDefaultImage();
+});
+
+// 添加格式化文件大小的 IPC 处理
+ipcMain.handle("format-file-size", async (event, bytes) => {
+  if (bytes === 0) return "0 Bytes";
+
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+});
+
+// 添加格式化日期的 IPC 处理
+ipcMain.handle("format-date", async (event, date) => {
+  return new Date(date).toLocaleString("zh-CN");
+});
+
+// 添加启动工具的 IPC 处理
+ipcMain.handle("launch-tool", async (event, filePath) => {
+  try {
+    await shell.openPath(filePath);
+    return { success: true };
+  } catch (err) {
+    console.error("启动工具失败:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+// 添加检查更新的 IPC 处理
+ipcMain.handle("check-for-updates", async () => {
+  // 实现检查更新逻辑
+  return { hasUpdate: false };
+});
+
+// 添加获取首页内容的 IPC 处理
+ipcMain.handle("get-welcome-content", async () => {
+  return `
+    <p class="welcome-text">
+      1.本软件仅提供从宗门下载游戏辅助工具的便利服务。<br />
+      2.任何要求您付费下载、购买激活码或解锁本软件功能等行为均视为诈骗，切勿相信。<br />
+      3.通过任何非官方提供的软件、其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失后果自负。
+    </p>
+  `;
+});
+
+// 添加获取关于页面内容的 IPC 处理
+ipcMain.handle("get-about-content", async () => {
+  return `
+    <div class="about-section">
+      <h3>作者：bilibili@禾傀</h3>
+
+      <div class="disclaimer-section">
+        <h4>软件性质</h4>
+        <p>
+          本软件（风灵月影宗）是一个免费的游戏辅助工具下载程序，其唯一功能是从
+          <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+          获取并本地管理游戏辅助工具。
+        </p>
+
+        <h4>免责声明</h4>
+
+        <div class="disclaimer-item">
+          <p class="disclaimer-title"><strong>非官方关联：</strong></p>
+          <p>
+            本软件由开发者本人独立开发，并非风灵月影(FLiNG
+            Trainer)的官方团队、合作伙伴或代理商，也与其无任何隶属关系。
+          </p>
+          <p>
+            用户从任何渠道跳转至风灵月影(FLiNG
+            Trainer)官方网站，其页面上的广告、赞助内容、付费服务或任何形式的商业收入，均与本人（本软件开发者）无任何关联。本人不从中获取任何收益，也不对其内容负责。
+          </p>
+        </div>
+
+        <div class="disclaimer-item">
+          <p class="disclaimer-title"><strong>软件责任：</strong></p>
+          <p>
+            本软件不修改、不破解、不重新分发任何软件文件，不收集任何用户数据。所有下载的文件均来自其官方源或用户指定的镜像。因此，风灵月影(FLiNG
+            Trainer)的版权、功能性、安全性以及使用该软件所产生的任何直接或间接问题，均由该软件的原始作者和提供商承担全部责任。
+          </p>
+        </div>
+
+        <div class="disclaimer-item">
+          <p class="disclaimer-title"><strong>用户责任：</strong></p>
+          <p>
+            用户在使用本软件下载并安装风灵月影(FLiNG
+            Trainer)提供的软件前，应自行判断其合规性与安全性，并同意遵守该软件的所有授权条款。
+          </p>
+          <p>
+            如果用户通过任何非官方渠道下载、安装或运行本程序，由此导致的一切后果（包括但不限于：程序被篡改、植入病毒木马、捆绑恶意软件、数据泄露、财产损失等）均须由用户自行承担。
+          </p>  
+        </div>
+
+        <h4>支持与反馈</h4>
+        <ul>
+          <p><strong>关于本软件 (风灵月影宗)：</strong><br>
+            如果您有问题、建议，或希望支持本软件的开发，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
+          </p>
+          <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
+            如果您希望支持风灵月影，请访问其官方网站： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
+          </p>
+        </ul>
+      </div>
+    </div>
+  `;
 });
