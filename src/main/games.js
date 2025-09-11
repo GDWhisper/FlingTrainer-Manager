@@ -132,5 +132,5 @@ async function crawlIfUpdated() {
   }
 }
 
-// 导出函数供 main.js 调用
-module.exports = { crawlIfUpdated };
+// 导出函数供 main/index.js 调用
+export { crawlIfUpdated };

@@ -102,7 +102,7 @@ async function loadDownloadedFiles() {
           <div class="tool-icon">
             <img src="${
               file.image
-            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src='../pic/default.png';">
+            }" alt="${fileNameWithoutExt}" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
           </div>
           <div class="tool-info">
             <h4>${fileNameWithoutExt}</h4>
@@ -212,13 +212,13 @@ async function loadAllGames() {
 
       result.data.forEach((game) => {
         // 防止 game.img 或 game.name 为 null/undefined
-        const img = game.img ? game.img.trim() : "../pic/default.png";
+        const img = game.img ? game.img.trim() : "./assets/pic/default.png";
         const name = game.name ? game.name.trim() : "未知游戏";
         const link = game.downloadPageLink ? game.downloadPageLink.trim() : "#";
 
         html += `
     <div class="game-card" data-download-link="${link}">
-      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='../pic/default.png';">
+      <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
       <div class="info">
         <h3 title="${name}">${name}</h3>
         <button class="btn detail-btn" onclick="openDetailPage('${link}', '${name.replace(
@@ -378,9 +378,9 @@ async function performSearch() {
             <div class="game-card" data-download-link="${
               game.downloadPageLink
             }">
-              <img src="${game.img || "../pic/default.png"}" alt="${
+              <img src="${game.img || "./assets/pic/default.png"}" alt="${
                 game.name
-              }" onerror="this.onerror=null;this.src='../pic/default.png';">
+              }" onerror="this.onerror=null;this.src='./assets/pic/default.png';">
               <div class="info">
                 <h3 title="${game.name}">${game.name}</h3>
                 <button class="btn detail-btn" onclick="openDetailPage('${

@@ -198,4 +198,4 @@ async function getDownloadInfo(downloadPageUrl) {
 }
 
 // 导出函数
-module.exports = { getDownloadInfo };
+export { getDownloadInfo };
