@@ -1,6 +1,8 @@
-# 忽略整个文件夹
 cache/
 node_modules/
 dist/
 temp/
 out/
+scripts/
+.env
+*.log

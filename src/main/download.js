@@ -1,5 +1,6 @@
-// downloadCrawler.js - 使用直接请求的高效版本
-const { app } = require('electron'); // 添加这行导入 app
+// 下载脚本
+
+const { app } = require('electron'); 
 const axios = require("axios");
 const cheerio = require("cheerio");
 const fs = require("fs");
@@ -75,7 +76,7 @@ async function getDownloadInfo(downloadPageUrl) {
   try {
     console.log(`正在访问下载页面：${downloadPageUrl}`);
 
-    // 使用 axios 直接请求页面内容，避免启动浏览器
+    // 请求页面内容
     const response = await axios.get(downloadPageUrl, {
       headers: {
         "User-Agent":
@@ -143,23 +144,6 @@ async function getDownloadInfo(downloadPageUrl) {
           return false;
         }
       });
-    }
-
-    // 查找提取码/密码
-    const contentText = $(".entry-content").text();
-    const passwordPatterns = [
-      /密码[:：]?\s*([a-zA-Z0-9]+)/,
-      /提取码[:：]?\s*([a-zA-Z0-9]+)/,
-      /code[:：]?\s*([a-zA-Z0-9]+)/,
-      /密码\s*[:：]?\s*([^\s\n]+)/,
-    ];
-
-    for (const pattern of passwordPatterns) {
-      const match = contentText.match(pattern);
-      if (match) {
-        downloadPassword = match[1];
-        break;
-      }
     }
 
     // 判断是否为外部链接
