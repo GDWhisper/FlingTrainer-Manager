@@ -1,6 +1,6 @@
 {
   "name": "ftm",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "main": "./out/main/index.js",
   "scripts": {
     "start": "electron-vite preview",
@@ -31,7 +31,7 @@
   "keywords": [],
   "author": "bilibili@禾傀",
   "license": "CC BY-ND",
-  "description": "An Electron-based desktop tool for productivity. Licensed under CC BY-ND 4.0. You may share and use this software with appropriate credit, but may not modify or create derivative works. 风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。根据 Creative Commons Attribution-NoDerivatives 4.0 International 许可证授权。您可以自由分享和使用本软件，但必须提供适当的署名，并且不得以任何形式修改、重新打包或以本作品为基础进行创作。",
+  "description": "风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。",
   "build": {
     "productName": "风灵月影宗",
     "appId": "com.hekui.flingtrainerdownloader",
