@@ -567,7 +567,7 @@ ipcMain.handle("get-about-content", async () => {
         <h4>支持与反馈</h4>
         <ul>
           <p><strong>关于本软件 (风灵月影宗)：</strong><br>
-            如果您有关于本软件的问题或建议，请访问：<a href="">Github</a>
+            如果您有关于本软件的问题或建议，请访问：<a href="https://github.com/GDWhisper/FlingTrainer-Manager">Github</a>
           </p>
           <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
             如果您希望支持风灵月影，请访问其官方网站： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
