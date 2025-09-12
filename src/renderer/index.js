@@ -983,7 +983,7 @@ async function getDefaultImage() {
   return await window.api.getDefaultImage();
 }
 
-// 将函数暴露到全局作用域，以便HTML中的onclick可以访问
+
 window.openDetailPage = openDetailPage;
 window.downloadGame = downloadGame;
 window.navigateTo = navigateTo;

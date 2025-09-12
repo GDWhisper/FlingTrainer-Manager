@@ -1,13 +1,12 @@
 {
   "name": "ftm",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "main": "./out/main/index.js",
   "scripts": {
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "preview": "electron-vite preview",
     "build": "electron-vite build",
-    "postbuild": "node scripts/process-renderer-assets.js",
     "dist": "npm run build && electron-builder"
   },
   "devDependencies": {
@@ -18,10 +17,7 @@
     "electron": "^37.4.0",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.0.0",
-    "html-minifier-terser": "^7.2.0",
-    "javascript-obfuscator": "^4.1.1",
     "vite": "^5.4.0",
-    "vite-plugin-bytecode": "^0.0.0",
     "vite-plugin-electron": "^0.29.0"
   },
   "dependencies": {
@@ -29,12 +25,12 @@
     "cheerio": "^1.1.2"
   },
   "keywords": [],
-  "author": "bilibili@禾傀",
-  "license": "CC BY-ND",
+  "author": "Github@GDWhisper",
+  "license": "GPL v3",
   "description": "风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。",
   "build": {
     "productName": "风灵月影宗",
-    "appId": "com.hekui.flingtrainerdownloader",
+    "appId": "com.gdw.flingtrainermanager",
     "copyright": "Copyright © 2025",
     "asar": true,
     "electronDownload": {
@@ -47,7 +43,9 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "风灵月影宗"
     },
     "files": [
       "out/**/*",

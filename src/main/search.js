@@ -1,5 +1,4 @@
-// searchCrawler.js - 用于 Electron 应用的搜索爬虫
-// 使用 axios + cheerio 架构
+// 搜索脚本
 
 const { app } = require("electron");
 const axios = require("axios");

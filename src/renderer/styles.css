@@ -20,7 +20,7 @@ body {
   background: #2c3e50;
   color: white;
   padding: 20px;
-  position: relative; /* 为绝对定位的子元素提供参考 */
+  position: relative; 
 }
 
 .logo {
@@ -54,7 +54,7 @@ body {
 /* 底部菜单样式 */
 .bottom-menu {
   position: absolute;
-  inset: auto 20px 20px 20px; /* top right bottom left */
+  inset: auto 20px 20px 20px; 
   width: auto;
 }
 
@@ -190,60 +190,21 @@ body {
 #about a:hover {
   text-decoration: underline;
 }
-/* .game-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.game-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-
-.game-card:hover {
-  transform: translateY(-5px);
-} */
-
-/* .game-card img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-}
-
-.game-card .info {
-  padding: 10px;
-}
-
-.game-card .info h3 {
-  font-size: 1em;
-  margin: 0 0 5px 0;
-}
-
-.game-card .info a {
-  color: #007acc;
-  text-decoration: none;
-  font-size: 0.9em;
-} */
 
 /* 游戏列表样式 */
-/* 游戏列表：每行最多 2 个，自动换行 */
+/* 游戏列表每行最多 2 个，自动换行 */
 .game-list {
   display: flex;
   flex-wrap: wrap;
   gap: 25px;
   margin-top: 20px;
-  justify-content: flex-start; /* 靠左对齐，可改为 center 居中 */
+  justify-content: flex-start;
   max-width: 1200px;
   padding: 0 10px;
   box-sizing: border-box;
 }
 
-/* 横向长方形卡片：宽高比 ~3:2 */
+/* 横向长方形卡片 */
 .game-card {
   position: relative;
   border: 1px solid #ddd;
@@ -251,9 +212,8 @@ body {
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  /* 每个卡片占 ~48% 宽度，实现每行 2 个 */
-  flex: 0 1 calc(50% - 12.5px); /* 50% - gap/2 */
-  min-width: 300px; /* 防止太小 */
+  flex: 0 1 calc(50% - 12.5px); 
+  min-width: 300px; 
   background: #fff;
 }
 
@@ -261,7 +221,8 @@ body {
 .game-card:hover {
   transform: translateY(-5px);
 }
-/* 平板以下屏幕：自动变为单列 */
+
+
 @media (max-width: 768px) {
   .game-card {
     flex: 0 1 100%;
@@ -274,22 +235,22 @@ body {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* 图片区域：横向宽高比（如 3:2），并确保图片完整显示 */
+/* 图片区域 */
 .game-card img {
   width: 100%;
-  height: 160px; /* 可根据需要调整：160~200px */
-  object-fit: contain; /* 修改这里，使图片适应卡片大小且完整显示 */
-  object-position: center; /* 居中显示图片 */
+  height: 160px; 
+  object-fit: contain; 
+  object-position: center; 
   border-bottom: 1px solid #eee;
 }
 
-/* 信息区域：增加内边距，更好阅读 */
+/* 信息区域 */
 .game-card .info {
   padding: 16px 14px;
   text-align: center;
 }
 
-/* 游戏名：支持两行，避免省略 */
+/* 游戏名 */
 .game-card .info h3 {
   font-size: 1.05em;
   margin: 0 0 10px 0;
@@ -366,7 +327,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 添加按钮点击波纹效果 */
+/* 按钮点击波纹效果 */
 .game-card .info .btn::before,
 .game-card .info a.btn::before,
 .game-card .info button.btn::before {
@@ -435,11 +396,6 @@ body {
   content: "✅ ";
 }
 
-/* .game-card .info a.btn:hover {
-  background-color: #005a99;
-  transform: scale(1.05);
-} */
-
 /* 搜索容器：输入框和按钮并排 */
 .search-box {
   margin: 20px 0 15px 0;
@@ -480,20 +436,6 @@ body {
   background-color: #005a99;
 }
 
-/* 响应式：小屏幕下按钮文字可改为图标 */
-@media (max-width: 480px) {
-  .search-btn {
-    font-size: 1.1em;
-    padding: 0 16px;
-  }
-  .search-btn span {
-    display: none;
-  }
-  .search-btn::before {
-    content: "🔍";
-  }
-}
-
 /* 清除按钮 × */
 .clear-search {
   position: absolute;
@@ -530,7 +472,6 @@ body {
   background: #f9f9f9;
   border-radius: 8px;
   border: 1px solid #eee;
-  /* 添加这行确保容器有足够宽度 */
   width: 100%;
   box-sizing: border-box;
 }
@@ -544,7 +485,6 @@ body {
 
 .setting-item input[type="text"] {
   width: 100%;
-  /* 添加最小宽度确保输入框不会过小 */
   min-width: 300px;
   max-width: 500px;
   padding: 10px;
@@ -552,9 +492,7 @@ body {
   border-radius: 4px;
   font-size: 14px;
   margin-bottom: 10px;
-  /* 添加显式的盒模型属性 */
   box-sizing: border-box;
-  /* 确保高度不会被压缩 */
   min-height: 40px;
 }
 
@@ -567,7 +505,6 @@ body {
   cursor: pointer;
   font-size: 14px;
   transition: background 0.3s;
-  /* 添加显式的显示属性 */
   display: inline-block;
 }
 
@@ -581,7 +518,7 @@ body {
   margin-top: 5px;
 }
 
-/* 为下载文件夹设置添加特殊样式 */
+/* 下载文件夹设置样式 */
 #download-folder {
   width: 100%;
   min-width: 300px;
@@ -692,7 +629,7 @@ body {
   border-radius: 8px;
   background: #fafafa;
   transition: all 0.3s ease;
-  min-height: 80px; /* 设置最小高度确保一致性 */
+  min-height: 80px; 
 }
 
 .tool-item:hover {
@@ -707,17 +644,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; /* 防止图标在空间不足时缩小 */
-  overflow: hidden; /* 确保图片不会溢出容器 */
-  border-radius: 4px; /* 添加圆角，与图片样式保持一致 */
+  flex-shrink: 0; 
+  overflow: hidden; 
+  border-radius: 4px; 
 }
 
 .tool-icon img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 确保图片完全填充容器 */
-  border-radius: 4px; /* 与容器保持一致的圆角 */
-  transition: all 0.3s ease; /* 添加过渡效果 */
+  object-fit: cover; 
+  border-radius: 4px; 
+  transition: all 0.3s ease;
 }
 
 /* 为没有图片的项目保留默认图标样式 */
@@ -761,7 +698,7 @@ body {
   flex-direction: column;
   align-items: flex-end;
   margin-left: 15px;
-  min-width: 120px; /* 设置最小宽度确保按钮对齐 */
+  min-width: 120px; 
 }
 
 .tool-actions .btn {
@@ -775,7 +712,7 @@ body {
   transition: background 0.3s;
   min-width: 80px;
   text-align: center;
-  flex-shrink: 0; /* 防止按钮在空间不足时缩小 */
+  flex-shrink: 0;
 }
 
 .tool-actions .btn:hover {

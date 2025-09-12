@@ -1,5 +1,4 @@
-// crawler.js - 使用 axios + cheerio 的轻量级爬虫
-// 用于抓取 https://flingtrainer.com 的游戏名称、图片、下载页链接
+// 获取最近更新信息脚本
 
 const { app } = require("electron");
 const axios = require("axios");
@@ -9,7 +8,7 @@ const path = require("path");
 
 // ==================== 配置 ====================
 const TARGET_URL = "https://flingtrainer.com";
-// 延迟初始化 CACHE_DIR，确保 app 已经准备好
+// 延迟初始化 CACHE_DIR
 let CACHE_DIR;
 let CACHE_FILE;
 

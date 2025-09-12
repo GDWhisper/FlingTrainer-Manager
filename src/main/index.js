@@ -20,7 +20,7 @@ import { crawlIfUpdated } from "./games.js";
 import { searchGames } from "./search.js";
 import { getDownloadInfo } from "./download.js";
 
-// 在 src/main/index.js 中添加资源路径处理
+// 资源路径处理
 const isDev = process.env.NODE_ENV === "development";
 const getResourcesPath = () => {
   if (isDev) {
@@ -193,7 +193,7 @@ ipcMain.handle("open-detail-window", async (event, url) => {
   return { success: true };
 });
 
-// 添加设置文件路径
+// 设置文件路径
 const settingsFile = path.join(app.getPath("userData"), "settings.json");
 
 // 加载设置
@@ -244,7 +244,7 @@ ipcMain.handle("download-file", async (event, url, folder) => {
     console.log(`开始下载文件: ${url}`);
     console.log(`下载目录: ${folder}`);
 
-    // 使用 axios 下载文件，添加适当的请求头
+    // 使用 axios 下载文件，添加请求头
     const response = await axios({
       method: "GET",
       url: url,
@@ -322,7 +322,7 @@ ipcMain.handle("download-file", async (event, url, folder) => {
     const writer = fs.createWriteStream(filePath);
     response.data.pipe(writer);
 
-    // 添加下载进度日志
+    // 下载进度日志
     let downloadedSize = 0;
     response.data.on("data", (chunk) => {
       downloadedSize += chunk.length;
@@ -448,9 +448,9 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
     return { success: false, error: err.message };
   }
 });
-// 监听来自渲染进程的打开外部链接请求 (替换原有实现)
+// 监听来自渲染进程的打开外部链接请求
 ipcMain.handle("open-external-link", async (event, url) => {
-  // 添加 URL 格式验证
+  //  URL 格式验证
   try {
     new URL(url); // 验证 URL 格式
   } catch (error) {
@@ -467,12 +467,12 @@ ipcMain.handle("open-external-link", async (event, url) => {
   }
 });
 
-// 添加获取默认图片路径的 IPC 处理
+// 获取默认图片路径的 IPC 处理
 ipcMain.handle("get-default-image", async () => {
   return getDefaultImage();
 });
 
-// 添加格式化文件大小的 IPC 处理
+// 格式化文件大小的 IPC 处理
 ipcMain.handle("format-file-size", async (event, bytes) => {
   if (bytes === 0) return "0 Bytes";
 
@@ -483,12 +483,12 @@ ipcMain.handle("format-file-size", async (event, bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 });
 
-// 添加格式化日期的 IPC 处理
+// 格式化日期的 IPC 处理
 ipcMain.handle("format-date", async (event, date) => {
   return new Date(date).toLocaleString("zh-CN");
 });
 
-// 添加启动工具的 IPC 处理
+// 启动工具的 IPC 处理
 ipcMain.handle("launch-tool", async (event, filePath) => {
   try {
     await shell.openPath(filePath);
@@ -499,28 +499,29 @@ ipcMain.handle("launch-tool", async (event, filePath) => {
   }
 });
 
-// 添加检查更新的 IPC 处理
+// 检查更新的 IPC 处理
 ipcMain.handle("check-for-updates", async () => {
-  // 实现检查更新逻辑
+  // 检查更新逻辑
   return { hasUpdate: false };
 });
 
-// 添加获取首页内容的 IPC 处理
+// 获取首页内容的 IPC 处理
 ipcMain.handle("get-welcome-content", async () => {
   return `
     <p class="welcome-text">
       1.本软件仅提供从宗门下载游戏辅助工具的便利服务。<br />
       2.任何要求您付费下载、购买激活码或解锁本软件功能等行为均视为诈骗，切勿相信。<br />
-      3.通过任何非官方提供的软件、其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失后果自负。
+      3.通过任何非官方提供的软件、其他来源下载的程序可能已被篡改，存在严重安全风险。因使用非官方版本导致的任何损失后果自负。 <br />
+      4.若您希望支持风灵月影（非本下载工具），请务必访问其官方网站：<a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
     </p>
   `;
 });
 
-// 添加获取关于页面内容的 IPC 处理
+// 获取关于页面内容的 IPC 处理
 ipcMain.handle("get-about-content", async () => {
   return `
     <div class="about-section">
-      <h3>作者：bilibili@禾傀</h3>
+      <h3>风灵月影宗</h3>
 
       <div class="disclaimer-section">
         <h4>软件性质</h4>
@@ -566,7 +567,7 @@ ipcMain.handle("get-about-content", async () => {
         <h4>支持与反馈</h4>
         <ul>
           <p><strong>关于本软件 (风灵月影宗)：</strong><br>
-            如果您有问题、建议，或希望支持本软件的开发，请联系：<a href="https://space.bilibili.com/1783619/upload/opus">bilibili@禾傀</a>
+            如果您有关于本软件的问题或建议，请访问：<a href="">Github</a>
           </p>
           <p><strong>关于风灵月影(FLiNG Trainer)：</strong><br>
             如果您希望支持风灵月影，请访问其官方网站： <a href="https://flingtrainer.com" target="_blank">https://flingtrainer.com</a>
