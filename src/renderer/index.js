@@ -1,4 +1,74 @@
 // renderer.js
+
+let externalLinkClickTimeout = null;
+let globalClickTimeout = null;
+
+// 优化事件监听器，避免重复绑定
+document.removeEventListener("click", handleNavigationClick);
+document.removeEventListener("click", handleTabClick);
+document.removeEventListener("click", handleFolderClick);
+
+// 导航链接处理
+function handleNavigationClick(e) {
+  // 防抖处理
+  if (globalClickTimeout) return;
+
+  // 处理导航链接
+  if (e.target.classList.contains("nav-link")) {
+    globalClickTimeout = setTimeout(() => {
+      globalClickTimeout = null;
+    }, 300);
+
+    e.preventDefault();
+    const targetPage = e.target.getAttribute("data-page");
+
+    if (targetPage === "website") {
+      // 打开外部网站
+      openExternalUrl("https://flingtrainer.com");
+    } else if (targetPage) {
+      navigateTo(targetPage);
+    }
+    return;
+  }
+}
+
+// 页签按钮处理
+function handleTabClick(e) {
+  // 防抖处理
+  if (globalClickTimeout) return;
+
+  // 处理页签按钮
+  if (e.target.classList.contains("tab-btn")) {
+    globalClickTimeout = setTimeout(() => {
+      globalClickTimeout = null;
+    }, 300);
+
+    const tabId = e.target.getAttribute("data-tab");
+    if (tabId) {
+      showTab(tabId);
+    }
+    return;
+  }
+}
+
+// 打开文件夹按钮处理
+function handleFolderClick(e) {
+  // 处理打开文件夹按钮
+  if (e.target.classList.contains("open-folder-btn")) {
+    const folderPath = e.target.getAttribute("data-folder");
+    if (folderPath) {
+      openDownloadFolder(folderPath);
+    }
+    return;
+  }
+}
+
+// 统一的点击事件监听器
+document.addEventListener("click", function (e) {
+  handleNavigationClick(e);
+  handleTabClick(e);
+  handleFolderClick(e);
+});
 // 页面切换函数
 function navigateTo(pageId) {
   document.querySelectorAll(".page").forEach((page) => {
@@ -467,14 +537,6 @@ async function openDetailPage(downloadPageUrl, gameName, buttonElement) {
   }
 
   try {
-    // 保存原始按钮文本和状态
-    const originalText = buttonElement.textContent;
-    const wasOpened = buttonElement.classList.contains("opened");
-
-    // 更新按钮状态为"打开中"
-    // buttonElement.textContent = "打开中...";
-    // buttonElement.disabled = true;
-
     // 检查 window.api 是否存在
     if (typeof window.api !== "undefined" && window.api.openDetailWindow) {
       // 使用 Electron 创建新窗口打开详情页
@@ -485,21 +547,9 @@ async function openDetailPage(downloadPageUrl, gameName, buttonElement) {
       window.open(downloadPageUrl, "_blank");
       showToast(`正在打开 ${gameName} 的Trainer下载详情页`);
     }
-
-    // // 更新按钮状态为"已打开"
-    // buttonElement.textContent = "已打开";
-    // buttonElement.disabled = false;
-    // buttonElement.classList.add("opened");
   } catch (err) {
     console.error("打开详情页失败:", err);
     showToast("打开详情页失败");
-
-    // 恢复按钮原始状态
-    if (buttonElement) {
-      buttonElement.textContent = "详情页";
-      buttonElement.disabled = false;
-      buttonElement.classList.remove("opened");
-    }
   }
 }
 
@@ -815,28 +865,44 @@ if (typeof path === "undefined") {
   };
 }
 
-// 拦截所有 a 标签点击事件
-document.addEventListener("click", async (event) => {
-  // 检查点击目标或其祖先是否是 <a> 标签
-  let target = event.target;
-  while (target && target !== document) {
-    if (target.tagName === "A") {
-      const href = target.getAttribute("href");
-      if (href && isExternalLink(href)) {
-        event.preventDefault(); // 阻止默认行为（在 Electron 窗口内打开）
-        try {
-          await window.api.openExternalLink(href);
-          console.log(`Opened external link: ${href}`);
-        } catch (error) {
-          console.error("Failed to open link:", error);
-        }
-        return;
-      }
-      break; // 找到 a 标签后就跳出循环
+// 拦截所有 a 标签点击事件 (替换原有实现)
+document.addEventListener(
+  "click",
+  async (event) => {
+    // 防抖处理 - 如果在1秒内重复点击则忽略
+    if (externalLinkClickTimeout) {
+      event.preventDefault();
+      return;
     }
-    target = target.parentElement;
-  }
-});
+
+    // 检查点击目标或其祖先是否是 <a> 标签
+    let target = event.target;
+    while (target && target !== document) {
+      if (target.tagName === "A") {
+        const href = target.getAttribute("href");
+        if (href && isExternalLink(href)) {
+          event.preventDefault(); // 阻止默认行为（在 Electron 窗口内打开）
+
+          // 设置防抖定时器
+          externalLinkClickTimeout = setTimeout(() => {
+            externalLinkClickTimeout = null;
+          }, 1000);
+
+          try {
+            await window.api.openExternalLink(href);
+            console.log(`Opened external link: ${href}`);
+          } catch (error) {
+            console.error("Failed to open link:", error);
+          }
+          return;
+        }
+        break; // 找到 a 标签后就跳出循环
+      }
+      target = target.parentElement;
+    }
+  },
+  true
+); // 使用捕获阶段，确保优先处理
 
 // 判断是否为外部链接（http/https）
 function isExternalLink(url) {
@@ -865,20 +931,30 @@ async function generateAboutContent() {
       const content = await window.api.getAboutContent();
       aboutContent.innerHTML = content;
 
-      // 重新绑定关于页面中的链接点击事件
-      const links = aboutContent.querySelectorAll("a");
-      links.forEach((link) => {
-        link.addEventListener("click", async (e) => {
+      // 使用事件委托处理链接点击，避免重复绑定
+      aboutContent.addEventListener("click", async (e) => {
+        // 防抖处理
+        if (externalLinkClickTimeout) {
           e.preventDefault();
-          const href = link.getAttribute("href");
+          return;
+        }
+        
+        if (e.target.tagName === "A") {
+          e.preventDefault();
+          const href = e.target.getAttribute("href");
           if (href) {
+            // 设置防抖定时器
+            externalLinkClickTimeout = setTimeout(() => {
+              externalLinkClickTimeout = null;
+            }, 1000);
+            
             try {
               await window.api.openExternal(href);
             } catch (error) {
               console.error("打开链接失败:", error);
             }
           }
-        });
+        }
       });
     } catch (error) {
       console.error("获取关于页面内容失败:", error);

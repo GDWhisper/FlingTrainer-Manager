@@ -62,8 +62,8 @@ function createWindow() {
       contextIsolation: true,
       spellcheck: false,
       sandbox: false,
-      devTools: process.env.NODE_ENV === 'development',
-      // devTools: false,
+      // devTools: process.env.NODE_ENV === 'development',
+      devTools: false,
     },
   });
 
@@ -77,7 +77,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
   // 打开开发者工具（调试用）
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // 动态设置窗口标题
   mainWindow.webContents.on("did-finish-load", () => {
@@ -448,8 +448,16 @@ ipcMain.handle("list-downloaded-files", async (event, folderPath) => {
     return { success: false, error: err.message };
   }
 });
-// 监听来自渲染进程的打开外部链接请求
+// 监听来自渲染进程的打开外部链接请求 (替换原有实现)
 ipcMain.handle("open-external-link", async (event, url) => {
+  // 添加 URL 格式验证
+  try {
+    new URL(url); // 验证 URL 格式
+  } catch (error) {
+    console.error("Invalid URL format:", url);
+    return { success: false, error: "无效的链接格式" };
+  }
+  
   try {
     await shell.openExternal(url);
     return { success: true };
