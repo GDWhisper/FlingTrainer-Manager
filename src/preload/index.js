@@ -1,33 +1,60 @@
-// preload.js
+// preload.js - 安全的 API 桥接
+// 仅暴露必要的 IPC 接口，不直接暴露 Node.js API
 
-const { contextBridge, ipcRenderer, shell } = require("electron");
+const { contextBridge, ipcRenderer } = require('electron');
 
-// 暴露 API 给渲染进程
-contextBridge.exposeInMainWorld("api", {
-  loadGames: () => ipcRenderer.invoke("load-games-from-web"),
-  searchGames: (keyword) => ipcRenderer.invoke("search-games", keyword),
+contextBridge.exposeInMainWorld('api', {
+  // 游戏相关
+  loadGames: (forceRefresh = false) => ipcRenderer.invoke('load-games-from-web', forceRefresh),
+  searchGames: (keyword, forceRefresh = false) => ipcRenderer.invoke('search-games', keyword, forceRefresh),
+
+  // 下载相关
   getDownloadInfo: (downloadPageUrl, gameName) =>
-    ipcRenderer.invoke("get-download-info", downloadPageUrl, gameName),
-  openExternal: (url) => shell.openExternal(url),
-  openDetailWindow: (url) => ipcRenderer.invoke("open-detail-window", url),
-  loadSettings: () => ipcRenderer.invoke("load-settings"),
-  saveSettings: (settings) => ipcRenderer.invoke("save-settings", settings),
-  selectFolder: () => ipcRenderer.invoke("select-folder"),
-  downloadFile: (url, folder) =>
-    ipcRenderer.invoke("download-file", url, folder),
-  openFolder: (folderPath) => ipcRenderer.invoke("open-folder", folderPath),
-  listDownloadedFiles: (folderPath) =>
-    ipcRenderer.invoke("list-downloaded-files", folderPath),
-  openExternalLink: (url) => ipcRenderer.invoke("open-external-link", url),
-  // 新增的安全 API
-  getDefaultImage: () => ipcRenderer.invoke("get-default-image"),
-  formatFileSize: (bytes) => ipcRenderer.invoke("format-file-size", bytes),
-  formatDate: (date) => ipcRenderer.invoke("format-date", date),
-  launchTool: (filePath) => ipcRenderer.invoke("launch-tool", filePath),
-  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
-  // 内容获取 API
-  getWelcomeContent: () => ipcRenderer.invoke("get-welcome-content"),
-  getAboutContent: () => ipcRenderer.invoke("get-about-content"),
-});
+    ipcRenderer.invoke('get-download-info', downloadPageUrl, gameName),
+  addDownloadTask: (taskInfo) =>
+    ipcRenderer.invoke('add-download-task', taskInfo),
+  cancelDownloadTask: (taskId) =>
+    ipcRenderer.invoke('cancel-download-task', taskId),
+  removeDownloadTask: (taskId) =>
+    ipcRenderer.invoke('remove-download-task', taskId),
+  clearAllDownloadTasks: () =>
+    ipcRenderer.invoke('clear-all-download-tasks'),
+  getAllDownloadTasks: () =>
+    ipcRenderer.invoke('get-all-download-tasks'),
+  getDownloadTaskStatus: (taskId) =>
+    ipcRenderer.invoke('get-download-task-status', taskId),
+  clearFinishedTasks: () =>
+    ipcRenderer.invoke('clear-finished-tasks'),
+  startDownloadListener: () =>
+    ipcRenderer.invoke('start-download-listener'),
+  stopDownloadListener: () =>
+    ipcRenderer.invoke('stop-download-listener'),
+  
+  // 监听下载状态变化
+  onDownloadStatusChanged: (callback) => {
+    ipcRenderer.on('download-status-changed', (_event, data) => callback(data));
+  },
 
-console.log("Preload script loaded"); // 添加日志以便调试
+  // 设置相关
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  openFolder: (folderPath) => ipcRenderer.invoke('open-folder', folderPath),
+
+  // 文件管理
+  listDownloadedFiles: (folderPath) =>
+    ipcRenderer.invoke('list-downloaded-files', folderPath),
+  openFolder: (folderPath) => ipcRenderer.invoke('open-folder', folderPath),
+  launchTool: (filePath) => ipcRenderer.invoke('launch-tool', filePath),
+  deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
+
+  // 窗口和链接
+  openDetailWindow: (url) => ipcRenderer.invoke('open-detail-window', url),
+  openExternalLink: (url) => ipcRenderer.invoke('open-external-link', url),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  
+  // 窗口控制
+  minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
+  maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
+  closeWindow: () => ipcRenderer.invoke('close-window'),
+});

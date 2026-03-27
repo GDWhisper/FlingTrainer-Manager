@@ -1,6 +1,6 @@
 {
   "name": "flingtrainermanager",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "main": "./out/main/index.js",
   "scripts": {
     "start": "electron-vite preview",
@@ -13,6 +13,7 @@
     "electron": "^37.4.0",
     "electron-builder": "^25.1.8",
     "electron-vite": "^2.0.0",
+    "rcedit": "^4.0.1",
     "vite": "^5.4.0"
   },
   "dependencies": {
@@ -22,32 +23,68 @@
   "keywords": [],
   "author": "Github@GDWhisper",
   "license": "GPL v3",
-  "description": "风灵月影宗 - 专为下载并管理游戏辅助工具而设计的桌面程序。",
+  "description": "风灵月影宗 - 专为下载并管理单机游戏辅助工具而设计的桌面程序。",
   "build": {
     "productName": "风灵月影宗",
     "appId": "com.gdw.flingtrainermanager",
     "copyright": "Copyright © 2025",
-    "asar": true,
+    "asar": {
+      "smartUnpack": true
+    },
+    "compression": "maximum",
     "electronDownload": {
       "mirror": "https://npmmirror.com/mirrors/electron/"
     },
     "win": {
-      "target": "nsis",
-      "icon": "icon.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "风灵月影宗"
+      "shortcutName": "风灵月影宗",
+      "include": "build/installer.nsh",
+      "differentialPackage": true,
+      "deleteAppDataOnUninstall": false,
+      "perMachine": false,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "unicode": true
     },
     "files": [
       "out/**/*",
       "icon.ico"
     ],
+    "extraResources": [
+      {
+        "from": "build/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
     "directories": {
-      "output": "dist"
-    }
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "afterPack": "build/after-pack.js",
+    "extraMetadata": {},
+    "publish": null
   }
 }
