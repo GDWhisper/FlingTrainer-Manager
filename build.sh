@@ -100,7 +100,11 @@ echo -e "${GREEN}  打包完成!${NC}"
 echo -e "${GREEN}  Build completed successfully!${NC}"
 echo "=========================================="
 echo ""
+echo ""
+>>>>>>> origin/main
 echo -e "${BLUE}[输出目录] dist/${NC}"
 echo -e "${BLUE}[安装包] 风灵月影宗 Setup ${VERSION}.exe${NC}"
 echo -e "${BLUE}[便携版] 风灵月影宗-${VERSION}-Portable.exe${NC}"
+echo ""
+=======
 echo ""
