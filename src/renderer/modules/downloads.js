@@ -293,6 +293,18 @@ export function stopDownloadListener() {
     downloadListenerActive = false;
   }
 }
+/**
+ * 注册窗口关闭时的下载监听清理（防止 setInterval 内存泄漏）
+ */
+if (typeof window !== 'undefined') {
+  let unloaded = false;
+  window.addEventListener('beforeunload', () => {
+    if (!unloaded) {
+      unloaded = true;
+      stopDownloadListener();
+    }
+  });
+}
 
 /**
  * 加载下载任务列表
