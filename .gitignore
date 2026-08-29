@@ -4,7 +4,8 @@ out/
 .env
 .DS_Store
 Thumbs.db
-scripts/
+scripts/*
+!scripts/gen-icon.py
 .lingma/
 .vscode/
 src_old/

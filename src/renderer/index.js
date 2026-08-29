@@ -9,6 +9,7 @@ import { initSettings } from './modules/settings.js';
 import { generateWelcomeContent, generateAboutContent } from './modules/pages.js';
 import { loadRecentUpdates, initRecentUpdatesRefresh } from './modules/recentUpdates.js';
 import { performSearchAllGames, clearSearchInputAllGames, initSearchPage } from './modules/searchAllGames.js';
+import { initThemeToggle } from './modules/theme.js';
 
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', () => {
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 初始化已下载列表事件
   initDownloadedListEvents();
+
+  // 初始化日间/夜间主题切换
+  initThemeToggle();
 });
 
 /**

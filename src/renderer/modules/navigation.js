@@ -12,6 +12,11 @@ let downloadingPageInitialized = false;
  * @param {string} pageId - 页面 ID
  */
 export function navigateTo(pageId) {
+  // 侧边栏导航高亮
+  document.querySelectorAll('.nav-link').forEach((link) => {
+    link.classList.toggle('active', link.dataset.page === pageId);
+  });
+
   document.querySelectorAll('.page').forEach((page) => page.classList.add('hidden'));
   const targetPage = document.getElementById(pageId);
   if (targetPage) targetPage.classList.remove('hidden');

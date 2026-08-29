@@ -18,6 +18,7 @@
 | `src/preload/index.js` | contextBridge，暴露 `window.api` |
 | `src/renderer/` | 单页原生 ESM；`index.html` 含 5 个 `.page` 区块；功能模块在 `modules/` |
 | `.dev_docs/` | 进行中的分析与重构文档（见「禁区」） |
+| `scripts/gen-icon.py` | 应用图标生成脚本；`app-icon-dark.png` / `icon.ico` / `build/icon.ico` 均由它产出，改图标跑脚本，勿直接改图 |
 
 ## 常用命令
 
@@ -49,8 +50,7 @@ npm run dist       # build + electron-builder → dist/（当前不可直接运�
 
 ## 边界与禁区
 
-- **打包资源不完整**：`package.json` 的 `build` 引用的三个资源中，`build/icon.ico` 已存在但未提交入库，`build/installer.nsh` 与 `build/after-pack.js` 仍缺失。`npm run dist` 不能假定可运行——先补齐缺失文件或调整配置再打包（详见 `build.md`）。
-- **`src/renderer/prototype/` 与带 `[PROTOTYPE]` 标记的引用**（`index.html` / `index.js`）：正在评审的 UI 方案（未入库），定稿决策未做出。不要删除、不要重构；定稿流程写在 `prototype/NOTES.md`。
+- **打包资源不完整**：`package.json` 的 `build` 引用的三个资源中，`build/installer.nsh` 与 `build/after-pack.js` 仍缺失（`build/icon.ico` 已入库）。`npm run dist` 不能假定可运行——先补齐缺失文件或调整配置再打包（详见 `build.md`）。
 - **`.dev_docs/REFACTORING_PLAN.md` 是未批准方案**：其中的 TypeScript 迁移、Vitest、winston、better-sqlite3 等，未经用户明确要求不要主动引入。
 - **不要提交**：`.data/`（运行时数据，删它会清掉本地缓存与设置）、`out/`、`dist/`。
 - **`build.bat` 保持纯 ASCII 英文输出**（commit 74e4908 是编码事故）；不要往里加中文。
@@ -76,4 +76,3 @@ npm run dist       # build + electron-builder → dist/（当前不可直接运�
 | Trainer / 修改器 | 游戏修改器，本应用下载管理的资源（.exe/.zip/.rar/.7z） |
 | 风灵月影宗 | 本产品名；flingtrainer.com 为被抓取的目标站 |
 | 页签 | tab；「我的修改器」页含「已下载 / 下载列表」两个页签 |
-| variants A–D | `prototype/` 中评审的 4 套主题草案 |

@@ -5,15 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>风灵月影宗</title>
     <link rel="stylesheet" href="styles.css" />
+    <!-- 尽早应用主题，避免启动闪烁：优先用户手动选择，未选择过则跟随系统外观 -->
+    <script>
+      (function () {
+        var saved = localStorage.getItem('app-theme');
+        var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = saved || (systemDark ? 'dark' : 'light');
+      })();
+    </script>
   </head>
   <body>
     <!-- 自定义标题栏 -->
     <div class="title-bar">
       <div class="title-bar-left">
-        <img src="./public/pic/default.png" alt="图标" class="title-bar-icon" />
+        <img src="./public/pic/app-icon-dark.png" alt="图标" class="title-bar-icon" />
         <span class="title-bar-text">风灵月影宗</span>
       </div>
       <div class="title-bar-right">
+        <button class="title-bar-btn theme-toggle" id="theme-toggle-btn" aria-label="切换日间/夜间模式，长按跟随系统">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span class="tip">
+            <span class="tip-action">切换到日间模式</span><br />
+            <span class="tip-hint">长按切换到跟随系统</span>
+          </span>
+        </button>
         <button class="title-bar-btn minimize" id="minimize-btn" title="最小化">−</button>
         <button class="title-bar-btn maximize" id="maximize-btn" title="最大化">◻</button>
         <button class="title-bar-btn close" id="close-btn" title="关闭">✕</button>
@@ -23,9 +51,8 @@
     <div class="container">
       <!-- 左侧边栏 -->
       <div class="sidebar">
-        <h2 class="logo">风灵月影宗</h2>
         <ul class="menu">
-          <li><a href="#home" class="nav-link" data-page="home">首页</a></li>
+          <li><a href="#home" class="nav-link active" data-page="home">首页</a></li>
           <li><a href="#all-games" class="nav-link" data-page="all-games">搜索</a></li>
           <li><a href="#cheats" class="nav-link" data-page="cheats">我的修改器</a></li>
           <li><a href="#settings" class="nav-link" data-page="settings">设置</a></li>
