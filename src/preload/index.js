@@ -30,9 +30,11 @@ contextBridge.exposeInMainWorld('api', {
   stopDownloadListener: () =>
     ipcRenderer.invoke('stop-download-listener'),
   
-  // 监听下载状态变化
+  // 监听下载状态变化（返回解绑函数，用于注销监听器）
   onDownloadStatusChanged: (callback) => {
-    ipcRenderer.on('download-status-changed', (_event, data) => callback(data));
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('download-status-changed', handler);
+    return () => ipcRenderer.removeListener('download-status-changed', handler);
   },
 
   // 设置相关

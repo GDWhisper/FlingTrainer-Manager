@@ -128,7 +128,7 @@ ipcMain.handle('start-download-listener', async (event) => {
 
 **问题：** 渲染进程直接关窗时（不走导航流程），interval 在 IPC 端持续运行导致内存泄漏
 
-**✅ 已修复：** 在 `src/renderer/modules/downloads.js` 添加 `beforeunload` 事件监听，窗口关闭前自动调用 `stopDownloadListener()` → IPC 通知主进程清理 setInterval。根因是渲染进程关闭时未走导航流程，故不触发原清理路径。
+**✅ 已修复：** `ipc/download.js` 已实现 `startDownloadListener()` + `stopDownloadListener()`，并在渲染进程添加 `beforeunload` 事件绑定自动调用清理。**2026-08-29 补充修复（Windows only 前提下复核）：** ① 主进程 tick 内增加 `sender.isDestroyed()` 自清理兜底，覆盖渲染进程崩溃等 `beforeunload` 不触发的异常路径（原"已知边界风险"消除）；② 渲染端 `onDownloadStatusChanged` 改为返回解绑函数，`stopDownloadListener()` 中同步注销——修复页签往返时 `ipcRenderer.on` 监听器累积导致的泄漏与重复渲染。
 
 ---
 
@@ -159,7 +159,7 @@ ipcMain.handle('start-download-listener', async (event) => {
 ---
 
 #### 6. 缓存策略简单（原 P1 #4，降级理由：游戏列表数据量小）
-**现状：** LRU 仅基于文件大小，无 TTL 混合
+**现状：** `src/main/utils/cache.js` 中 `downloadAndCacheImage` 使用了 LRU 类实现，实际有 TTL 感知参数，但配置值较短（游戏列表仅 12 小时）
 
 ```javascript
 // utils/cache.js - 纯 LRU
@@ -168,7 +168,7 @@ export class CacheManager {
 }
 ```
 
-**建议：** 先监控缓存命中率；过高则不急于改造。必要时增加 LFU + TTL
+**建议：** `ipc/crawler.js` 的 `downloadAndCacheImage` 已实现缓存读取，但 `readCache(cacheFile, CACHE_TTL.GAMES)` 中的 TTL 较短（游戏列表仅 12 小时）。当前"LRU + TTL"策略依赖命中率高时自动淘汰过期条目；若命中率低需考虑缩短 TTL 或引入 LFU + TTL 混合淘汰。
 
 ---
 
@@ -195,7 +195,7 @@ export class CacheManager {
 #### 9. 测试覆盖
 | 层级 | 当前状态 | 建议 |
 |------|---------|------|
-| 单元测试 | 无 | Vitest + 覆盖服务层核心逻辑 |
+| 单元测试 | 无 | Vitest + `electron-mocker`（Electron IPC handler 测试需专门 mock main process） |
 | E2E 测试 | 无 | Playwright / @electron-toolkit/electron-test |
 
 ---
@@ -203,11 +203,9 @@ export class CacheManager {
 ## ⚠️ 风险点（需持续关注）
 
 | 风险 | 说明 | 缓解措施 |
-|------|------|---------|
-| **cheerio 解析脆弱** | flingtrainer.com 页面结构变化会导致爬取失败 | 添加解析结果校验 + 版本快照 |
-| **设置路径硬编码** | `../../.data/settings.json` 在不同构建下可能失效 | 统一使用 `getAppDataPath()` |
-| **User-Agent 固定** | 可能被目标网站识别为爬虫 | 添加随机化或轮换机制 |
-| ~~**下载监听器泄漏**~~ | setInterval 无自动清理 | ~~添加窗口关闭事件监听~~ ✅ 已修复 (P0 #3) |
+|------|-----|---------|
+| **cheerio 解析脆弱** | flingtrainer.com 页面结构变化会导致爬取失败，且当前无解析结果校验层 | 在 `cacheGamesImages` 调用前增加 JSON Schema 校验，确保返回数据结构完整 |
+| ~~**设置路径硬编码**~~ | `../../.data/settings.json` 在不同构建下可能失效 | 统一使用 `getAppDataPath()` |
 
 ---
 

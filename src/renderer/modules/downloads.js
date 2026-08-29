@@ -7,6 +7,7 @@ import { formatFileSize, formatDate, getDefaultImage, escapeHtml } from './utils
 // 下载任务列表
 let downloadTasks = [];
 let downloadListenerActive = false;
+let unsubscribeStatusChanged = null;
 
 /**
  * 初始化已下载列表的事件委托（更多按钮）
@@ -241,14 +242,14 @@ export function initDownloadList() {
   // 启动下载监听
   if (!downloadListenerActive && typeof window.api !== 'undefined') {
     window.api.startDownloadListener();
-    
-    window.api.onDownloadStatusChanged((data) => {
+
+    unsubscribeStatusChanged = window.api.onDownloadStatusChanged((data) => {
       if (data.tasks) {
         downloadTasks = data.tasks;
         renderDownloadList();
       }
     });
-    
+
     downloadListenerActive = true;
   }
   
@@ -290,6 +291,10 @@ export function initDownloadList() {
 export function stopDownloadListener() {
   if (downloadListenerActive && typeof window.api !== 'undefined') {
     window.api.stopDownloadListener();
+    if (unsubscribeStatusChanged) {
+      unsubscribeStatusChanged();
+      unsubscribeStatusChanged = null;
+    }
     downloadListenerActive = false;
   }
 }

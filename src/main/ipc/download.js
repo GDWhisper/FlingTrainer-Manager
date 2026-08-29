@@ -92,9 +92,16 @@ export function registerDownloadHandlers() {
       clearInterval(statusListenerInterval);
     }
 
+    const sender = event.sender;
     statusListenerInterval = setInterval(() => {
+      // 渲染进程崩溃等异常场景下 beforeunload 不会触发，此处兜底自清理
+      if (sender.isDestroyed()) {
+        clearInterval(statusListenerInterval);
+        statusListenerInterval = null;
+        return;
+      }
       const tasks = downloadManager.getAllTasks();
-      event.sender.send('download-status-changed', { tasks });
+      sender.send('download-status-changed', { tasks });
     }, 1000); // 每秒推送一次状态
 
     return { success: true };
