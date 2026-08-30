@@ -1,6 +1,6 @@
 {
   "name": "flingtrainermanager",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "main": "./out/main/index.js",
   "scripts": {
     "start": "electron-vite preview",
