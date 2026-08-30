@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "axios": "^1.11.0",
-    "cheerio": "^1.1.2"
+    "cheerio": "^1.1.2",
+    "js-yaml": "^5.4.1"
   },
   "keywords": [],
   "author": "Github@GDWhisper",
@@ -51,6 +52,7 @@
         }
       ],
       "icon": "build/icon.ico",
+      "artifactName": "FlingTrainer-Manager-${version}-win.${ext}",
       "requestedExecutionLevel": "asInvoker",
       "signAndEditExecutable": false
     },
@@ -61,6 +63,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "风灵月影宗",
       "include": "build/installer.nsh",
+      "artifactName": "FlingTrainer-Manager-Setup-${version}.${ext}",
       "differentialPackage": true,
       "deleteAppDataOnUninstall": false,
       "perMachine": false,
@@ -85,6 +88,10 @@
     },
     "afterPack": "build/after-pack.js",
     "extraMetadata": {},
-    "publish": null
+    "publish": {
+      "provider": "github",
+      "owner": "GDWhisper",
+      "repo": "FlingTrainer-Manager"
+    }
   }
 }

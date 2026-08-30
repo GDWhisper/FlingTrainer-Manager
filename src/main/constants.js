@@ -37,3 +37,25 @@ export const IMAGE_CACHE_CONFIG = {
 
 // 请求超时（毫秒）
 export const REQUEST_TIMEOUT = 30000;
+
+// 应用内更新配置（GitHub Releases，全自研实现，不依赖 electron-updater）
+export const UPDATE_CONFIG = {
+  // GitHub 基地址（本地冒烟测试可临时覆盖为 http://127.0.0.1:<port>，测完还原）
+  GITHUB_BASE: 'https://github.com',
+  GITHUB_OWNER: 'GDWhisper',
+  GITHUB_REPO: 'FlingTrainer-Manager',
+  // 更新说明页（用户可手动下载的兜底入口）
+  RELEASES_PAGE_URL: 'https://github.com/GDWhisper/FlingTrainer-Manager/releases/latest',
+  // 检查更新超时（毫秒）
+  CHECK_TIMEOUT: 15000,
+  // 下载请求超时（毫秒，与 downloader.js 同参数）
+  DOWNLOAD_TIMEOUT: 60000,
+  // 下载停滞判定：连续该时长未收到数据则判定为网络停滞（毫秒）
+  STALL_TIMEOUT: 60000,
+  // 下载中状态推送间隔（毫秒）
+  NOTIFY_INTERVAL: 500,
+  // 启动后静默检查更新的延迟（毫秒）
+  STARTUP_CHECK_DELAY: 3000,
+  // NSIS 卸载器文件名（exe 旁存在即判定为安装版，否则为便携 zip 版）
+  UNINSTALLER_NAME: 'Uninstall 风灵月影宗.exe',
+};

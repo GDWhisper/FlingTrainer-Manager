@@ -46,15 +46,29 @@ contextBridge.exposeInMainWorld('api', {
   // 文件管理
   listDownloadedFiles: (folderPath) =>
     ipcRenderer.invoke('list-downloaded-files', folderPath),
-  openFolder: (folderPath) => ipcRenderer.invoke('open-folder', folderPath),
   launchTool: (filePath) => ipcRenderer.invoke('launch-tool', filePath),
   deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
 
   // 窗口和链接
   openDetailWindow: (url) => ipcRenderer.invoke('open-detail-window', url),
   openExternalLink: (url) => ipcRenderer.invoke('open-external-link', url),
+
+  // 应用更新
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
-  
+  getUpdateState: () => ipcRenderer.invoke('get-update-state'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  pauseUpdateDownload: () => ipcRenderer.invoke('pause-update-download'),
+  cancelUpdateDownload: () => ipcRenderer.invoke('cancel-update-download'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  startUpdateListener: () => ipcRenderer.invoke('start-update-listener'),
+  stopUpdateListener: () => ipcRenderer.invoke('stop-update-listener'),
+  // 监听更新状态变化（返回解绑函数，用于注销监听器）
+  onUpdateStateChanged: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('update-state-changed', handler);
+    return () => ipcRenderer.removeListener('update-state-changed', handler);
+  },
+
   // 窗口控制
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),

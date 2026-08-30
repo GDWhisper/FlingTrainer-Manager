@@ -37,10 +37,7 @@ export function registerWindowHandlers() {
     }
   });
 
-  // 检查更新
-  ipcMain.handle('check-for-updates', async () => {
-    return { hasUpdate: false };
-  });
+  // 检查更新：已迁移到 ipc/updater.js 的真实实现
 
   // 最小化窗口
   ipcMain.handle('minimize-window', async () => {

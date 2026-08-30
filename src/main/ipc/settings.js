@@ -40,17 +40,23 @@ function getAppDataPath() {
 
 const settingsFile = path.join(getAppDataPath(), 'settings.json');
 
+/**
+ * 同步读取设置（供主进程启动流程使用，如启动静默检查更新）
+ */
+export function loadSettingsSync() {
+  try {
+    if (fs.existsSync(settingsFile)) {
+      return JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+    }
+  } catch (err) {
+    console.error('加载设置失败:', err);
+  }
+  return {};
+}
+
 export function registerSettingsHandlers() {
   ipcMain.handle('load-settings', async () => {
-    try {
-      if (fs.existsSync(settingsFile)) {
-        return JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
-      }
-      return {};
-    } catch (err) {
-      console.error('加载设置失败:', err);
-      return {};
-    }
+    return loadSettingsSync();
   });
 
   ipcMain.handle('save-settings', async (_event, settings) => {

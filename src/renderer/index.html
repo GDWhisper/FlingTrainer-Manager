@@ -133,6 +133,38 @@
               <p class="setting-description">所有下载任务的文件都会保存到此文件夹，应用的文件管理功能（如查看、打开、删除）也基于此目录。</p>
             </div>
           </div>
+
+          <div class="settings-section">
+            <h3>软件更新</h3>
+            <div class="setting-item">
+              <label>当前版本:</label>
+              <span id="update-current-version" class="update-version-text">-</span>
+              <button id="check-update-btn" class="btn">检查更新</button>
+              <span id="update-check-status" class="setting-description-inline"></span>
+            </div>
+            <div class="setting-item update-option-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="auto-check-update" />
+                启动时自动检查更新
+              </label>
+              <p class="setting-description">仅在启动时联网检查新版本并提示，不会自动下载。</p>
+            </div>
+
+            <div id="update-card" class="update-card hidden">
+              <div class="update-card-header">
+                <span class="update-new-version" id="update-latest-version"></span>
+                <span class="update-release-date" id="update-release-date"></span>
+                <a href="#" id="update-release-link" class="update-release-link">查看更新内容</a>
+              </div>
+              <div class="update-status-text" id="update-status-text"></div>
+              <div class="task-progress-bar update-progress-bar">
+                <div class="task-progress-fill" id="update-progress-fill" style="width: 0%"></div>
+              </div>
+              <div class="update-progress-info" id="update-progress-info"></div>
+              <div class="update-error-text" id="update-error-text"></div>
+              <div class="task-actions update-actions" id="update-actions"></div>
+            </div>
+          </div>
         </div>
 
         <!-- 关于 -->

@@ -1376,6 +1376,114 @@ h2 {
   margin-top: 5px;
 }
 
+/* 软件更新区块 */
+.settings-section + .settings-section {
+  margin-top: 15px;
+}
+
+.update-version-text {
+  color: var(--text);
+  font-weight: bold;
+}
+
+.setting-description-inline {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.update-option-item {
+  margin-top: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal !important;
+  color: var(--text) !important;
+  cursor: pointer;
+}
+
+.checkbox-label input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.update-card {
+  margin-top: 15px;
+  padding: 15px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.update-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.update-new-version {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.update-release-date {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.update-release-link {
+  font-size: 13px;
+  color: var(--info-text);
+  text-decoration: none;
+}
+
+.update-release-link:hover {
+  text-decoration: underline;
+}
+
+.update-status-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.update-progress-bar {
+  margin-bottom: 6px;
+}
+
+.update-progress-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.update-error-text {
+  font-size: 13px;
+  color: var(--err-text);
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.update-error-text:empty {
+  display: none;
+}
+
+.update-actions {
+  margin-top: 5px;
+}
+
+.about-version {
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--text-dim);
+}
+
 /* ========== 关于页面 ========== */
 .about-section {
   background: var(--surface);

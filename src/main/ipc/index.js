@@ -6,6 +6,7 @@ import { registerDownloadHandlers } from './download.js';
 import { registerSettingsHandlers } from './settings.js';
 import { registerFilesHandlers } from './files.js';
 import { registerWindowHandlers } from './window.js';
+import { registerUpdaterHandlers } from './updater.js';
 
 export function registerAllIpcHandlers() {
   registerGamesHandlers();
@@ -14,4 +15,5 @@ export function registerAllIpcHandlers() {
   registerSettingsHandlers();
   registerFilesHandlers();
   registerWindowHandlers();
+  registerUpdaterHandlers();
 }

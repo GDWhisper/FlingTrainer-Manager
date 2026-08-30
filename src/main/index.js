@@ -10,8 +10,10 @@ process.on('unhandledRejection', (reason) => {
 
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
-import { APP_VERSION } from './constants.js';
+import { APP_VERSION, UPDATE_CONFIG } from './constants.js';
 import { registerAllIpcHandlers } from './ipc/index.js';
+import { loadSettingsSync } from './ipc/settings.js';
+import { updateService } from './services/updater.js';
 
 // 隐藏默认菜单栏
 Menu.setApplicationMenu(Menu.buildFromTemplate([]));
@@ -57,6 +59,21 @@ app
           createWindow();
         }
       });
+
+      // 启动静默检查更新：仅打包版且用户未关闭开关；绝不自动下载，
+      // 检查结果经 update-state-changed 推送与设置页快照回放呈现
+      setTimeout(() => {
+        try {
+          if (!app.isPackaged) return;
+          const settings = loadSettingsSync();
+          if (settings.autoCheckUpdate === false) return;
+          updateService.check().catch(() => {
+            /* 静默检查失败不打扰用户，状态保留在 updateService 供查询 */
+          });
+        } catch (err) {
+          console.error('启动检查更新失败:', err);
+        }
+      }, UPDATE_CONFIG.STARTUP_CHECK_DELAY);
     } catch (error) {
       console.error('创建窗口时出错:', error);
       app.quit();

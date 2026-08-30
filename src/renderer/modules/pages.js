@@ -24,7 +24,7 @@ export function generateAboutContent() {
 
   container.innerHTML = `
     <div class="about-section">
-      <h3>风灵月影宗</h3>
+      <h3>风灵月影宗 <span id="about-version" class="about-version"></span></h3>
 
       <div class="disclaimer-section">
         <h4>软件性质</h4>

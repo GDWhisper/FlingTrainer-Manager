@@ -6,6 +6,7 @@ import { navigateTo, showTab } from './modules/navigation.js';
 import { loadAllGames } from './modules/games.js';
 import { downloadGame, loadDownloadedFiles, showConfirmDialog, initDownloadedListEvents } from './modules/downloads.js';
 import { initSettings } from './modules/settings.js';
+import { initUpdater } from './modules/updater.js';
 import { generateWelcomeContent, generateAboutContent } from './modules/pages.js';
 import { loadRecentUpdates, initRecentUpdatesRefresh } from './modules/recentUpdates.js';
 import { performSearchAllGames, clearSearchInputAllGames, initSearchPage } from './modules/searchAllGames.js';
@@ -26,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 初始化设置页面
   initSettings();
+
+  // 初始化应用内更新（常驻状态监听 + 设置页更新区块）
+  initUpdater();
 
   // 初始化搜索页面（绑定回车键）
   initSearchPage();

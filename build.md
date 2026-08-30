@@ -36,12 +36,13 @@ build.bat     # 仅限 CMD 环境；在 PowerShell 中运行会报语法错误
 
 ## 打包产物
 
-位于 `dist/`，文件名中的版本号来自 `package.json` 的 `version`：
+位于 `dist/`，文件名中的版本号来自 `package.json` 的 `version`（ASCII 命名，便于 GitHub Releases 直链下载与应用内更新）：
 
 | 文件 | 类型 | 用途 |
 |------|------|------|
-| `风灵月影宗 Setup x.x.x.exe` | NSIS 安装包（可选安装目录、桌面 + 开始菜单快捷方式） | 正式分发 |
-| `风灵月影宗-x.x.x-win.zip` | 便携版（解压即用） | 随身携带 |
+| `FlingTrainer-Manager-Setup-x.x.x.exe` | NSIS 安装包（可选安装目录、桌面 + 开始菜单快捷方式） | 正式分发（应用内更新的下载对象） |
+| `FlingTrainer-Manager-x.x.x-win.zip` | 便携版（解压即用） | 随身携带 |
+| `FlingTrainer-Manager-x.x.x-win.zip.blockmap` / `builder-effective-config.yaml` | 差分更新元数据 / 生效配置快照 | 顺带生成 |
 
 ## 关键打包配置（已启用）
 
@@ -49,18 +50,22 @@ build.bat     # 仅限 CMD 环境；在 PowerShell 中运行会报语法错误
 - `compression: maximum` —— 最高压缩级别
 - NSIS：非 one-click、允许自选安装目录、Unicode、差分更新（`differentialPackage`）
 - `win.requestedExecutionLevel: asInvoker`；禁用代码签名（`signAndEditExecutable: false`，规避符号链接权限问题）
+- `publish` 指向 GitHub `GDWhisper/FlingTrainer-Manager`（应用内更新的清单与资产来源）
+- `afterPack` 钩子（`build/after-pack.js`）：UPX 压缩主程序，UPX 不在 PATH 时优雅跳过
 
-## ⚠️ 已知问题：打包资源不完整
+## 应用内更新的发布流程
 
-`package.json` 的 `build` 段引用了三个 `build/` 资源，当前状态：
+应用自带的更新功能（`src/main/services/updater.js`）从 GitHub Release 拉取清单与安装包，发版时需手动上传「四件套」到对应 Release：
 
-| 文件 | 状态 |
-|------|------|
-| `build/icon.ico` | ✓ 已存在（尚未提交入库，全新克隆的仓库没有它） |
-| `build/installer.nsh` | ✗ 缺失（应包含 `SetCompressor lzma`，见修复日志） |
-| `build/after-pack.js` | ✗ 缺失（UPX 后处理钩子） |
+1. 改 `package.json` 的 `version` → `npm run dist`
+2. 上传到 GitHub Release（draft → publish）：
+   - `FlingTrainer-Manager-Setup-x.x.x.exe`（NSIS 安装包，应用内更新的下载对象）
+   - `FlingTrainer-Manager-x.x.x-win.zip`（便携版）
+   - `latest.yml`（更新清单：版本号、文件名、sha512、大小）
+   - `.exe.blockmap`（保留即可，应用内更新暂不使用差分下载）
+3. 校验：发布后访问 `https://github.com/GDWhisper/FlingTrainer-Manager/releases/latest/download/latest.yml` 能取到新版本清单，旧版本应用即可在「设置 → 软件更新」中看到更新
 
-此状态下 `npm run dist` 无法完成打包。打包前需二选一：补齐两个缺失文件，或移除 `package.json` 中对应的 `nsis.include` / `afterPack` 引用。
+注意：应用内更新下载的是 NSIS 安装包；便携 zip 用户走「前往下载页」手动更新（通过 exe 旁有无 NSIS 卸载器自动判定）。
 
 ## 常见问题
 

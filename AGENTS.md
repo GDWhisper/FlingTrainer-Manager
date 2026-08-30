@@ -12,7 +12,7 @@
 |---|---|
 | `src/main/index.js` | 主进程入口，只负责窗口与生命周期 |
 | `src/main/ipc/` | IPC 处理器；`ipc/index.js` 是唯一注册入口 |
-| `src/main/services/` | `crawler.js`（cheerio 抓取）、`downloader.js`（内存下载队列单例） |
+| `src/main/services/` | `crawler.js`（cheerio 抓取）、`downloader.js`（内存下载队列单例）、`updater.js`（应用内更新） |
 | `src/main/utils/` | `cache.js`（运行时数据路径）、`http.js`、`requestLimiter.js`（刷新配额） |
 | `src/main/constants.js` | 目标 URL、缓存 TTL、限流参数 |
 | `src/preload/index.js` | contextBridge，暴露 `window.api` |
@@ -27,7 +27,7 @@ npm install        # registry 与 Electron 镜像在 .npmrc（npmmirror），勿
 npm run dev        # electron-vite dev；渲染进程 dev server 固定为 http://localhost:5173
 npm run build      # electron-vite build → out/
 npm run preview    # 运行 out/ 产物（npm start 等价）
-npm run dist       # build + electron-builder → dist/（当前不可直接运行，见「打包资源不完整」）
+npm run dist       # build + electron-builder → dist/
 ```
 
 一键打包：`.\build.ps1`（PowerShell，推荐）；`build.bat` 仅限 CMD 运行。
@@ -45,12 +45,12 @@ npm run dist       # build + electron-builder → dist/（当前不可直接运�
 7. **无边框窗口** `frame: false`：最小化/最大化/关闭走 `ipc/window.js` + 渲染进程自定义标题栏，不要恢复系统边框。
 8. **模块风格分裂是有意的**：`preload/index.js` 用 CJS（require/contextBridge），main 与 renderer 用 ESM，保持现状。
 9. **版本号唯一权威是 `package.json` 的 `version`**（产物文件名依赖它）。`constants.js` 的 `APP_VERSION = '0.2.6'` 已过时（仅在 `main/index.js` 被 import，从未使用），不要依赖或扩展它。
-10. **两个占位 IPC，勿在其上构建功能**：`check-for-updates` 恒返回 `hasUpdate: false`；`show-confirm-dialog` 恒返回 true（真实确认弹窗在渲染进程 `modules/downloads.js` 的 `showConfirmDialog`）。
+10. **占位 IPC `show-confirm-dialog`，勿在其上构建功能**：恒返回 true（真实确认弹窗在渲染进程 `modules/downloads.js` 的 `showConfirmDialog`）。原「检查更新占位」已替换为真实实现（见下条）。
 11. **下载任务不持久化**：任务只存在于 `downloader.js` 的内存 Map，重启即丢，这是有意现状（持久化在 `docs/ROADMAP.md` 路线图中），不要当作 bug 上报或顺手加持久化。
+12. **应用内更新是全自研的，勿换回 electron-updater**（`services/updater.js`）：electron-updater 6.x 的下载器无 pause、无 Range 断点续传（取消重试即从头下载），不满足「可暂停/停止/重试」的产品要求。约束：清单走 GitHub `releases/latest/download/latest.yml` 稳定直链（`UPDATE_CONFIG.GITHUB_BASE` 可覆盖以便本地冒烟）；`.part` 保留即暂停、删除即停止，跨重启凭磁盘 `.part` 续传；sha512 校验通过才改名；安装仅 `spawn /S` 且需用户确认，绝不自动下载；dev（`app.isPackaged === false`）不检查更新；`update-state-changed` 推送与下载监听同样适用三重防护（见第 3 条）。
 
 ## 边界与禁区
 
-- **打包资源不完整**：`package.json` 的 `build` 引用的三个资源中，`build/installer.nsh` 与 `build/after-pack.js` 仍缺失（`build/icon.ico` 已入库）。`npm run dist` 不能假定可运行——先补齐缺失文件或调整配置再打包（详见 `build.md`）。
 - **`.dev_docs/REFACTORING_PLAN.md` 是未批准方案**：其中的 TypeScript 迁移、Vitest、winston、better-sqlite3 等，未经用户明确要求不要主动引入。
 - **不要提交**：`.data/`（运行时数据，删它会清掉本地缓存与设置）、`out/`、`dist/`。
 - **`build.bat` 保持纯 ASCII 英文输出**（commit 74e4908 是编码事故）；不要往里加中文。
@@ -61,7 +61,7 @@ npm run dist       # build + electron-builder → dist/（当前不可直接运�
 - **新增 IPC 功能**：① `src/main/ipc/<module>.js` 加 handler 并在 `ipc/index.js` 注册；② `preload/index.js` 挂到 `window.api`；③ renderer 调用。通道名 kebab-case；handler 返回值统一 `{ success, ... }` / `{ success: false, error }`。
 - **新增页面/页签**：`index.html` 加 `.page` 容器与 `nav-link[data-page]`（页签为 `.tab-btn` / `.tab-pane`）→ `modules/navigation.js` 处理切换与懒加载标志 → `index.js` 的 DOMContentLoaded 里初始化。
 - **抓取解析失效**（目标站改版时）：改 `services/crawler.js` / `downloader.js` 里的 cheerio 选择器；限流参数在 `constants.js`。
-- **发版**：改 `package.json version`（产物文件名自动跟随）→ 解决「打包资源不完整」后 `npm run dist`。
+- **发版**：改 `package.json version`（产物文件名自动跟随）→ `npm run dist` → 在 GitHub Releases 手动上传安装包、便携 zip、`latest.yml` 与 `.blockmap` 四件套（`build/publish` 已指向 GDWhisper/FlingTrainer-Manager，应用内更新依赖该 Release 的 latest.yml）。
 
 ## 环境前置
 
