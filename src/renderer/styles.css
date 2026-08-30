@@ -730,6 +730,14 @@ h2 {
   animation: rotate 1s linear infinite;
 }
 
+/* 加载中：按钮持续旋转并短暂不可重复点击（is-loading 避开全局 .loading 占位符样式） */
+.refresh-btn.is-loading {
+  pointer-events: none;
+  border-color: var(--accent);
+  color: var(--info-text);
+  opacity: 0.75;
+}
+
 /* ========== 游戏列表 / 卡片 ========== */
 .game-list {
   display: grid;

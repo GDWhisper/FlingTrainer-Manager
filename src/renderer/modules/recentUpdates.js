@@ -57,11 +57,15 @@ export async function loadRecentUpdates(forceRefresh = false) {
   // 如果已经加载过且不是强制刷新，则不再重复加载
   if (recentUpdatesLoaded && !forceRefresh) return;
 
-  container.innerHTML = '<div class="loading">正在加载最近更新...</div>';
+  // 已有内容时保留原列表，加载状态由按钮特效表达；仅首次加载显示占位
+  const hasContent = recentUpdatesLoaded;
+  if (!hasContent) {
+    container.innerHTML = '<div class="loading">正在加载最近更新...</div>';
+  }
 
   try {
     if (typeof window.api === 'undefined') {
-      container.innerHTML = '<div class="error">API 未加载</div>';
+      if (!hasContent) container.innerHTML = '<div class="error">API 未加载</div>';
       return;
     }
 
@@ -70,25 +74,41 @@ export async function loadRecentUpdates(forceRefresh = false) {
 
     // 检查返回结果
     if (result.error) {
-      container.innerHTML = `
-        <div class="error">${escapeHtml(result.error)}</div>
-      `;
-      
+      // 网络失败时主进程可能带回过期缓存兜底数据，能渲染就渲染以保住列表
+      if (result.data && result.data.length > 0) {
+        renderIfChanged(container, result.data);
+        recentUpdatesLoaded = true;
+      } else if (!hasContent) {
+        container.innerHTML = `
+          <div class="error">${escapeHtml(result.error)}</div>
+        `;
+      }
+
       // 显示错误提示
       if (result.error.includes('次数已达上限')) {
         showToast(result.error);
       } else if (result.error.includes('网络错误')) {
-        showToast('网络异常，已使用本地缓存数据');
+        if (result.data && result.data.length > 0) {
+          showToast('网络异常，已使用本地缓存数据');
+        } else if (hasContent) {
+          showToast('网络异常，刷新失败，已保留当前列表');
+        } else {
+          showToast('网络异常，请检查网络连接');
+        }
       }
       return;
     }
 
     if (!result.data || result.data.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <p>暂无更新数据</p>
-        </div>
-      `;
+      if (hasContent) {
+        showToast('未获取到更新数据，已保留当前列表');
+      } else {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>暂无更新数据</p>
+          </div>
+        `;
+      }
       return;
     }
 
@@ -99,17 +119,32 @@ export async function loadRecentUpdates(forceRefresh = false) {
         showToast('数据没有更新');
       } else {
         showToast('数据已更新');
-        cachedDataHash = newHash;
       }
     }
 
-    renderRecentUpdates(container, result.data);
+    renderIfChanged(container, result.data);
     recentUpdatesLoaded = true;
   } catch (err) {
     console.error('加载最近更新失败:', err);
-    container.innerHTML = '<div class="error">加载最近更新失败</div>';
-    showToast('加载失败，请检查网络连接');
+    if (!hasContent) {
+      container.innerHTML = '<div class="error">加载最近更新失败</div>';
+    }
+    showToast(hasContent ? '加载失败，已保留当前列表' : '加载失败，请检查网络连接');
   }
+}
+
+/**
+ * 数据未变化且列表仍在时跳过重绘，避免刷新时卡片闪烁
+ * @param {HTMLElement} container - 容器元素
+ * @param {Array} games - 游戏数据数组
+ */
+function renderIfChanged(container, games) {
+  const newHash = generateDataHash(games);
+  if (newHash === cachedDataHash && container.querySelector('.game-card')) {
+    return;
+  }
+  cachedDataHash = newHash;
+  renderRecentUpdates(container, games);
 }
 
 /**
@@ -119,25 +154,25 @@ export function initRecentUpdatesRefresh() {
   const refreshBtn = document.getElementById('refresh-recent-updates-btn');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', async () => {
+      // is-loading 避开全局 .loading 占位符样式（padding: 40px 20px）会撑大按钮
+      if (refreshBtn.classList.contains('is-loading')) return;
+
       // 检查冷却时间
       const cooldown = checkCooldown();
       if (cooldown) {
         showToast(`请勿频繁刷新，请等待 ${cooldown} 秒后再试`);
         return;
       }
-      
-      // 添加旋转动画
-      refreshBtn.classList.add('rotating');
-      
+
+      // 旋转动画持续到加载结束，而不是固定时长
+      refreshBtn.classList.add('rotating', 'is-loading');
+
       try {
         await loadRecentUpdates(true);
         // 刷新成功后更新冷却时间
         lastRefreshTime = Date.now();
       } finally {
-        // 移除动画（延迟一点让用户看到反馈）
-        setTimeout(() => {
-          refreshBtn.classList.remove('rotating');
-        }, 500);
+        refreshBtn.classList.remove('rotating', 'is-loading');
       }
     });
   }
