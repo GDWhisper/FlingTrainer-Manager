@@ -1,0 +1,108 @@
+name: Release
+
+# 推送 v* 格式的 tag 自动云构建并发布 Release
+# 产物四件套：NSIS 安装包 / .exe.blockmap / 便携 zip / latest.yml（应用内更新清单）
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout（完整历史，发版公告需要 tag 间提交记录）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 校验 tag 与 package.json 版本一致
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_VERSION="${TAG_VERSION%%-*}"   # 允许 v0.4.0-rc.1 这类预发布 tag
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::tag ($GITHUB_REF_NAME) 与 package.json version ($PKG_VERSION) 不一致"
+            exit 1
+          fi
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 构建生产资源
+        run: npm run build
+
+      - name: 打包 Windows 产物
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: 校验产物齐全
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION%%-*}"
+          for f in \
+            "FlingTrainer-Manager-Setup-${VERSION}.exe" \
+            "FlingTrainer-Manager-Setup-${VERSION}.exe.blockmap" \
+            "FlingTrainer-Manager-${VERSION}-win.zip" \
+            "latest.yml"; do
+            test -f "dist/$f" || { echo "::error::缺少产物 dist/$f"; exit 1; }
+          done
+
+      - name: 创建 Release 并上传产物
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          VERSION="${VERSION%%-*}"
+
+          # 优先使用 release-notes/<tag>.md 作为发布公告；缺省用上一个 tag 到本次 tag 的提交记录生成
+          if [ -f "release-notes/${TAG}.md" ]; then
+            cp "release-notes/${TAG}.md" release-notes.md
+          else
+            PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
+            {
+              echo "## 更新内容"
+              echo
+              if [ -n "$PREV_TAG" ]; then
+                git log --pretty=format:'- %s' "${PREV_TAG}..${TAG}"
+                echo
+                echo
+              fi
+              echo "## 下载说明"
+              echo
+              echo "- 安装版：\`FlingTrainer-Manager-Setup-${VERSION}.exe\`（推荐）"
+              echo "- 便携版：\`FlingTrainer-Manager-${VERSION}-win.zip\`（解压即用）"
+              echo
+              echo "安装版可在应用内「设置 → 软件更新」一键升级；便携版请在本页手动下载新版本。"
+            } > release-notes.md
+          fi
+
+          # 带 - 后缀的 tag（如 v0.4.0-rc.1）发布为预发布版本，不占用 releases/latest 直链
+          PRERELEASE_FLAG=""
+          case "$TAG" in *-*) PRERELEASE_FLAG="--prerelease" ;; esac
+
+          gh release create "$TAG" \
+            "dist/FlingTrainer-Manager-Setup-${VERSION}.exe" \
+            "dist/FlingTrainer-Manager-Setup-${VERSION}.exe.blockmap" \
+            "dist/FlingTrainer-Manager-${VERSION}-win.zip" \
+            "dist/latest.yml" \
+            --title "风灵月影宗 ${TAG}" \
+            --notes-file release-notes.md \
+            $PRERELEASE_FLAG

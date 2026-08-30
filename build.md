@@ -53,19 +53,24 @@ build.bat     # 仅限 CMD 环境；在 PowerShell 中运行会报语法错误
 - `publish` 指向 GitHub `GDWhisper/FlingTrainer-Manager`（应用内更新的清单与资产来源）
 - `afterPack` 钩子（`build/after-pack.js`）：UPX 压缩主程序，UPX 不在 PATH 时优雅跳过
 
-## 应用内更新的发布流程
+## 发版流程（tag 云构建自动发布）
 
-应用自带的更新功能（`src/main/services/updater.js`）从 GitHub Release 拉取清单与安装包，发版时需手动上传「四件套」到对应 Release：
+发版由 GitHub Actions 自动完成（`.github/workflows/release.yml`）：推送 `v*` 格式的 tag → `windows-latest` 云端打包 → 自动创建 Release 并上传「四件套」。本地不再需要 `npm run dist` + 手动上传。
 
-1. 改 `package.json` 的 `version` → `npm run dist`
-2. 上传到 GitHub Release（draft → publish）：
+1. 改 `package.json` 的 `version`，提交并推送分支
+2. 打 tag 并推送：`git tag v0.4.0 && git push origin v0.4.0`
+   - tag 必须与 `version` 一致（如 `v0.4.0` ↔ `0.4.0`），工作流第一步会校验，不一致直接失败
+   - 允许预发布后缀（如 `v0.4.0-rc.1`），会发布为 pre-release，不影响 `releases/latest` 直链
+3. 构建完成后自动创建 Release，上传四件套：
    - `FlingTrainer-Manager-Setup-x.x.x.exe`（NSIS 安装包，应用内更新的下载对象）
+   - `FlingTrainer-Manager-x.x.x.exe.blockmap`（保留即可，应用内更新暂不使用差分下载）
    - `FlingTrainer-Manager-x.x.x-win.zip`（便携版）
    - `latest.yml`（更新清单：版本号、文件名、sha512、大小）
-   - `.exe.blockmap`（保留即可，应用内更新暂不使用差分下载）
-3. 校验：发布后访问 `https://github.com/GDWhisper/FlingTrainer-Manager/releases/latest/download/latest.yml` 能取到新版本清单，旧版本应用即可在「设置 → 软件更新」中看到更新
+4. 校验：`https://github.com/GDWhisper/FlingTrainer-Manager/releases/latest/download/latest.yml` 能取到新版本清单，旧版本应用即可在「设置 → 软件更新」中看到更新
 
-注意：应用内更新下载的是 NSIS 安装包；便携 zip 用户走「前往下载页」手动更新（通过 exe 旁有无 NSIS 卸载器自动判定）。
+发布公告：仓库根 `release-notes/<tag>.md`（如 `release-notes/v0.4.0.md`）存在时作为 Release 公告；缺省用上一个 tag 到本次 tag 的提交记录自动生成。
+
+CI 说明：依赖安装用 `npm ci`（`package-lock.json` 必须与 `package.json` 同步提交）；`.npmrc` 的 npmmirror 镜像在 CI 同样生效；打包命令为 `npx electron-builder --win --x64 --publish never`，发布改由 `gh release create` 显式上传（不依赖 electron-builder 的 publish 行为）。本地 `npm run dist` / `build.ps1` 仍可自测产物，不会触发发布。
 
 ## 常见问题
 

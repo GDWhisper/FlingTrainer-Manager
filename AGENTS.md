@@ -19,6 +19,7 @@
 | `src/renderer/` | 单页原生 ESM；`index.html` 含 5 个 `.page` 区块；功能模块在 `modules/` |
 | `.dev_docs/` | 进行中的分析与重构文档（见「禁区」） |
 | `scripts/gen-icon.py` | 应用图标生成脚本；`app-icon-dark.png` / `icon.ico` / `build/icon.ico` 均由它产出，改图标跑脚本，勿直接改图 |
+| `.github/workflows/release.yml` | tag（`v*`）触发的云构建发布流水线：自动打包 Windows 产物并创建 GitHub Release（公告可放 `release-notes/<tag>.md`） |
 
 ## 常用命令
 
@@ -61,7 +62,7 @@ npm run dist       # build + electron-builder → dist/
 - **新增 IPC 功能**：① `src/main/ipc/<module>.js` 加 handler 并在 `ipc/index.js` 注册；② `preload/index.js` 挂到 `window.api`；③ renderer 调用。通道名 kebab-case；handler 返回值统一 `{ success, ... }` / `{ success: false, error }`。
 - **新增页面/页签**：`index.html` 加 `.page` 容器与 `nav-link[data-page]`（页签为 `.tab-btn` / `.tab-pane`）→ `modules/navigation.js` 处理切换与懒加载标志 → `index.js` 的 DOMContentLoaded 里初始化。
 - **抓取解析失效**（目标站改版时）：改 `services/crawler.js` / `downloader.js` 里的 cheerio 选择器；限流参数在 `constants.js`。
-- **发版**：改 `package.json version`（产物文件名自动跟随）→ `npm run dist` → 在 GitHub Releases 手动上传安装包、便携 zip、`latest.yml` 与 `.blockmap` 四件套（`build/publish` 已指向 GDWhisper/FlingTrainer-Manager，应用内更新依赖该 Release 的 latest.yml）。
+- **发版**：改 `package.json version`（产物文件名自动跟随）→ 提交推送后打 `v*` tag 并推送 → GitHub Actions（`.github/workflows/release.yml`）自动云构建并创建 Release、上传四件套（`build/publish` 已指向 GDWhisper/FlingTrainer-Manager，应用内更新依赖该 Release 的 latest.yml）。tag 必须与 version 一致（工作流有校验），带 `-` 后缀（如 `v0.4.0-rc.1`）发预发布。本地 `npm run dist` 只作自测，不再手动上传。
 
 ## 环境前置
 
