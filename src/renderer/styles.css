@@ -1345,15 +1345,9 @@ h2 {
   transition: box-shadow 0.2s;
 }
 
-/* 设置卡片通用 hover 阴影（含置顶的下载设置卡片） */
+/* 设置卡片通用 hover 阴影 */
 .settings-section:hover {
   box-shadow: var(--shadow-hover);
-}
-
-.settings-section.pinned-top {
-  position: sticky;
-  top: 12px;
-  z-index: 10;
 }
 
 .settings-section h3 {
