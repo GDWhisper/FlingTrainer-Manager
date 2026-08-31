@@ -1362,6 +1362,11 @@ h2 {
   gap: 10px;
 }
 
+/* 同一区块内多个设置项之间拉开明显间隔，避免上一项的说明文字与下一项开关挤在一起 */
+.setting-item + .setting-item {
+  margin-top: 20px;
+}
+
 .setting-item label {
   font-weight: bold;
   color: var(--text-muted);
@@ -1383,11 +1388,11 @@ h2 {
   border-color: var(--accent);
 }
 
+/* 说明文字与所属控件之间只保留 flex gap 的 10px，与选项间 20px 形成分组层次 */
 .setting-description {
   width: 100%;
   font-size: 13px;
   color: var(--text-dim);
-  margin-top: 5px;
 }
 
 /* 软件更新区块 */
@@ -1403,10 +1408,6 @@ h2 {
 .setting-description-inline {
   font-size: 13px;
   color: var(--text-dim);
-}
-
-.update-option-item {
-  margin-top: 10px;
 }
 
 .checkbox-label {
