@@ -14,7 +14,7 @@ import { spawn } from 'child_process';
 import axios from 'axios';
 import { load as loadYaml } from 'js-yaml';
 import { UPDATE_CONFIG } from '../constants.js';
-import { getAppDataDirectory } from '../utils/cache.js';
+import { getAppDataDirectory, isPortableInstall } from '../utils/cache.js';
 
 // 状态机：idle → checking → available / not-available → downloading ⇄ paused
 //   → verifying → downloaded → installing；任意阶段可进入 error
@@ -77,7 +77,7 @@ class UpdateService extends EventEmitter {
     this._cancelRequested = false;
     this._notifyTimer = null;
     this._stallTimer = null;
-    this._isPortable = null; // 延迟探测并缓存
+    this._legacyUpdateDirCleaned = false;
   }
 
   // ========== 状态与通知 ==========
@@ -129,11 +129,41 @@ class UpdateService extends EventEmitter {
   // ========== 路径与形态探测 ==========
 
   _updateDir() {
-    const dir = path.join(getAppDataDirectory(), 'update');
+    // 更新包绝不能落在安装目录内：更新式卸载会搬移/清空安装目录，正在运行的新安装器
+    // 自身的映像无法被搬移，会导致 "Failed to uninstall old application files"（v0.4.x 事故）。
+    // 安装版放 Electron userData（安装目录之外），便携版维持 exe 旁绿色目录。
+    const base = this.isPortable() ? getAppDataDirectory() : app.getPath('userData');
+    const dir = path.join(base, 'update');
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+    this._cleanupLegacyUpdateDir();
     return dir;
+  }
+
+  // ≤0.4.1 把更新包下载在 exe 旁数据目录（安装目录内部），是 v0.4.x 更新必败的死点之一。
+  // 安装版升级后一次性清理遗留的安装包与 .part（便携版目录仍在使用，保留原位）。
+  _cleanupLegacyUpdateDir() {
+    if (this._legacyUpdateDirCleaned) {
+      return;
+    }
+    this._legacyUpdateDirCleaned = true;
+    if (this.isPortable()) {
+      return;
+    }
+    try {
+      const legacy = path.join(
+        path.dirname(process.execPath),
+        'FlingTrainer-Manager-Data',
+        'update'
+      );
+      if (fs.existsSync(legacy)) {
+        fs.rmSync(legacy, { recursive: true, force: true });
+        console.log('已清理旧版更新目录:', legacy);
+      }
+    } catch (err) {
+      console.warn('清理旧版更新目录失败（忽略）:', err.message);
+    }
   }
 
   _partFile() {
@@ -155,24 +185,11 @@ class UpdateService extends EventEmitter {
   }
 
   /**
-   * 便携版判定：exe 旁没有 NSIS 卸载器即为便携 zip 版（不支持应用内安装）
+   * 便携版判定：exe 旁没有 NSIS 卸载器即为便携 zip 版（不支持应用内安装）。
+   * 判定逻辑统一收敛在 cache.js 的 isPortableInstall（安装版/便携版数据目录分流共用同一语义）。
    */
   isPortable() {
-    if (this._isPortable === null) {
-      try {
-        if (!app.isPackaged) {
-          this._isPortable = false; // 开发环境按安装版处理，便于调试完整流程
-        } else {
-          const exeDir = path.dirname(process.execPath);
-          this._isPortable = !fs.existsSync(
-            path.join(exeDir, UPDATE_CONFIG.UNINSTALLER_NAME)
-          );
-        }
-      } catch {
-        this._isPortable = false;
-      }
-    }
-    return this._isPortable;
+    return isPortableInstall();
   }
 
   // ========== 检查更新 ==========

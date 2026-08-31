@@ -53,7 +53,7 @@ npm run dist       # build + electron-builder → dist/
 2. **限流是有意设计，不是性能缺陷**：`http.js` 的随机延迟、`requestLimiter.js` 的每日刷新配额与冷却、图片并发上限均为「道德爬虫」策略（见 `constants.js REQUEST_LIMITS`）。不要为提速移除。
 3. **下载状态推送的三重防护**（近期两个提交 ce651b6 / 7db1758 修的内存泄漏）：主进程 `setInterval` 每秒推送，必须同时保留 ① 渲染进程 `beforeunload` 调 `stopDownloadListener` ② `onDownloadStatusChanged` 返回的解绑函数被调用 ③ 主进程 `sender.isDestroyed()` 兜底。改这段逻辑时三者缺一不可。
 4. **`sanitizeTask` 白名单**（`downloader.js`）：推送给渲染进程的任务字段以白名单为准（`AbortController` 等不可序列化）。给下载任务新增字段时，必须同步加入白名单，否则渲染进程拿不到。
-5. **运行时数据路径**（`utils/cache.js`）：dev 写仓库根 `.data/`（gitignored）；生产写 exe 旁 `FlingTrainer-Manager-Data/`（绿色便携设计），失败才回退 userData。读写缓存/设置一律经 `getCacheDir()` / `getAppDataPath()`，不要自拼路径——`files.js` 里硬编码 `.data/settings.json` 是已知 bug（见 `INITIAL_ANALYSIS.md`），不要照抄。
+5. **运行时数据路径**（`utils/cache.js`）：dev 写仓库根 `.data/`（gitignored）；**安装版写 Electron userData（%APPDATA%）**；便携 zip 版写 exe 旁 `FlingTrainer-Manager-Data/`（绿色便携设计），创建失败才回退 userData。安装版的数据与更新包绝不能放安装目录内——NSIS 更新式卸载（`--updated`）会搬移/清空安装目录，曾致 v0.4.x 应用内更新 100% 失败；跨卷搬移也必败，故 `build/installer.nsh` 用 `customRemoveFiles` 覆盖为就地删除。读写缓存/设置一律经 `getCacheDir()` / `getAppDataDirectory()`，路径逻辑勿再复制（`ipc/settings.js`、`downloaded-games-icons.js` 曾各留一份复制品导致分叉，已统一进 cache.js）。
 6. **主窗口 `devTools: false`**：无法直接开 DevTools。调试渲染进程：开发时用浏览器打开 `http://localhost:5173`（渲染层对 `window.api` 未定义有保护），或临时改该开关。
 7. **无边框窗口** `frame: false`：最小化/最大化/关闭走 `ipc/window.js` + 渲染进程自定义标题栏，不要恢复系统边框。
 8. **模块风格分裂是有意的**：`preload/index.js` 用 CJS（require/contextBridge），main 与 renderer 用 ESM，保持现状。

@@ -3,14 +3,60 @@
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { IMAGE_CACHE_CONFIG } from '../constants.js';
+import { IMAGE_CACHE_CONFIG, UPDATE_CONFIG } from '../constants.js';
 
 // 缓存根目录（延迟初始化）
 let _cacheRootDir = null;
 
+// 安装形态判定（进程内缓存）：exe 旁存在 NSIS 卸载器即安装版，否则为便携 zip 版。
+// 开发环境视为安装版（与 updater 的语义一致，便于调试完整更新流程）。
+let _isPortable = null;
+export function isPortableInstall() {
+  if (_isPortable === null) {
+    if (process.env.NODE_ENV === 'development') {
+      _isPortable = false;
+    } else {
+      try {
+        _isPortable = !fs.existsSync(
+          path.join(path.dirname(process.execPath), UPDATE_CONFIG.UNINSTALLER_NAME)
+        );
+      } catch {
+        _isPortable = false;
+      }
+    }
+  }
+  return _isPortable;
+}
+
+// 一次性迁移：≤0.4.1 的安装版把数据写在 exe 旁 FlingTrainer-Manager-Data（安装目录内部），
+// 而更新式卸载会搬移/清空安装目录，数据放里面必丢。把仅有的两份用户数据拷贝到新的
+// userData 位置（非破坏式，旧目录留给卸载流程清理）。
+let _legacyMigrated = false;
+function migrateLegacyInstalledData(newBase) {
+  if (_legacyMigrated) {
+    return;
+  }
+  _legacyMigrated = true;
+  const legacyDir = path.join(path.dirname(process.execPath), 'FlingTrainer-Manager-Data');
+  for (const name of ['settings.json', 'downloaded-games.json']) {
+    try {
+      const from = path.join(legacyDir, name);
+      const to = path.join(newBase, name);
+      if (fs.existsSync(from) && !fs.existsSync(to)) {
+        fs.copyFileSync(from, to);
+        console.log(`已迁移旧版数据: ${from} -> ${to}`);
+      }
+    } catch (err) {
+      console.warn(`迁移旧版数据 ${name} 失败（忽略）:`, err.message);
+    }
+  }
+}
+
 /**
- * 获取应用安装目录或可执行文件所在目录
- * 用于实现绿色便携化，所有数据保存在应用目录内
+ * 获取应用数据根目录
+ * 安装版：Electron userData（%APPDATA%，安装目录之外）——更新式卸载会整目录搬移安装目录，
+ *   数据放里面必丢；更新包放里面则更新必败（v0.4.x 应用内更新 100% 失败的根因）。
+ * 便携 zip 版：exe 旁绿色目录，保持数据随目录移动；创建失败才回退 userData。
  */
 function getAppDataPath() {
   // 开发环境：使用项目根目录下的 .data 文件夹
@@ -21,30 +67,31 @@ function getAppDataPath() {
     }
     return devPath;
   }
-  
-  // 生产环境：使用可执行文件所在目录
+
+  if (!isPortableInstall()) {
+    const userData = app.getPath('userData');
+    migrateLegacyInstalledData(userData);
+    return userData;
+  }
+
+  // 便携版：使用可执行文件所在目录
   try {
-    const exePath = process.execPath;
-    const exeDir = path.dirname(exePath);
-    
-    // 检查是否有写入权限（某些安装目录可能需要特殊处理）
+    const exeDir = path.dirname(process.execPath);
     const appDataDir = path.join(exeDir, 'FlingTrainer-Manager-Data');
-    
-    // 确保目录存在
+
+    // 确保目录存在（创建失败说明目录不可写，回退到用户数据目录）
     if (!fs.existsSync(appDataDir)) {
       try {
         fs.mkdirSync(appDataDir, { recursive: true });
       } catch (err) {
         console.warn('无法在应用目录创建数据文件夹，回退到用户数据目录:', err.message);
-        // 如果无法在应用目录创建，则回退到用户数据目录
         return path.join(app.getPath('userData'), 'FlingTrainer-Manager');
       }
     }
-    
+
     return appDataDir;
   } catch (err) {
     console.error('获取应用路径失败:', err.message);
-    // 出错时回退到用户数据目录
     return path.join(app.getPath('userData'), 'FlingTrainer-Manager');
   }
 }

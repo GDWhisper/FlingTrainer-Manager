@@ -6,48 +6,13 @@ import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
 import { CACHE_TTL } from '../constants.js';
-import { getCacheDir, readCache, writeCache } from '../utils/cache.js';
+import { getAppDataDirectory, getCacheDir, readCache, writeCache } from '../utils/cache.js';
 import { createHttpClient } from '../utils/http.js';
-import { app } from 'electron';
-
-// 获取数据目录路径（绿色存储策略）
-function getDataDirectory() {
-  // 开发环境：使用项目根目录下的 .data 文件夹
-  if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
-    const devPath = path.join(process.cwd(), '.data');
-    if (!fs.existsSync(devPath)) {
-      fs.mkdirSync(devPath, { recursive: true });
-    }
-    return devPath;
-  }
-  
-  // 生产环境：使用可执行文件所在目录
-  try {
-    const exePath = process.execPath;
-    const exeDir = path.dirname(exePath);
-    const appDataDir = path.join(exeDir, 'FlingTrainer-Manager-Data');
-    
-    // 确保目录存在
-    if (!fs.existsSync(appDataDir)) {
-      try {
-        fs.mkdirSync(appDataDir, { recursive: true });
-      } catch (err) {
-        console.warn('无法在应用目录创建数据文件夹，回退到用户数据目录:', err.message);
-        return path.join(app.getPath('userData'), 'FlingTrainer-Manager');
-      }
-    }
-    
-    return appDataDir;
-  } catch (err) {
-    console.error('获取数据目录失败:', err);
-    return path.join(app.getPath('userData'), 'FlingTrainer-Manager');
-  }
-}
 
 // 已下载游戏图标映射管理
 class DownloadedGamesIconManager {
   constructor() {
-    const dataDir = getDataDirectory();
+    const dataDir = getAppDataDirectory();
     this.iconMapFile = path.join(dataDir, 'downloaded-games.json');
     this.iconMap = { tasks: [] };
     this.load();
