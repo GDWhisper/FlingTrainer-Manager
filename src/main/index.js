@@ -14,12 +14,17 @@ import { APP_VERSION, UPDATE_CONFIG } from './constants.js';
 import { registerAllIpcHandlers } from './ipc/index.js';
 import { loadSettingsSync } from './ipc/settings.js';
 import { updateService } from './services/updater.js';
+import { bindMainWindow, hideToTray } from './services/tray.js';
 
 // 隐藏默认菜单栏
 Menu.setApplicationMenu(Menu.buildFromTemplate([]));
 
 // 注册所有 IPC 处理器
 registerAllIpcHandlers();
+
+let mainWindow = null;
+// app.quit()（托盘菜单退出、更新安装、渲染进程 quit-app）时置位，关闭拦截一律放行
+let isQuitting = false;
 
 // 创建主窗口
 function createWindow() {
@@ -53,7 +58,27 @@ app
   .whenReady()
   .then(() => {
     try {
-      createWindow();
+      mainWindow = createWindow();
+      bindMainWindow(mainWindow);
+
+      // 关闭拦截：统一处理标题栏 ✕（close-window）与 Alt+F4
+      mainWindow.on('close', (event) => {
+        if (isQuitting) return;
+        const wc = mainWindow.webContents;
+        // 页面尚未加载完成时无法弹窗询问，直接放行避免卡死
+        if (wc.isLoading()) return;
+        const { minimizeToTray } = loadSettingsSync();
+        if (minimizeToTray === true) {
+          event.preventDefault();
+          hideToTray();
+        } else if (minimizeToTray === undefined) {
+          // 用户未设置过：交由渲染进程弹窗询问
+          event.preventDefault();
+          if (!wc.isDestroyed()) wc.send('close-behavior-confirm-requested');
+        }
+        // minimizeToTray === false：放行，正常关闭退出
+      });
+
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
           createWindow();
@@ -83,6 +108,11 @@ app
     console.error('应用启动失败:', error);
     app.quit();
   });
+
+// 任何 app.quit() 路径（托盘菜单退出、更新安装、渲染进程 quit-app）都先经此放行关闭拦截
+app.on('before-quit', () => {
+  isQuitting = true;
+});
 
 // 所有窗口关闭时退出
 app.on('window-all-closed', () => {

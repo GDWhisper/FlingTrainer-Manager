@@ -1,7 +1,8 @@
 // 窗口和外部链接 IPC 处理器
 
-import { ipcMain, shell, BrowserWindow } from 'electron';
+import { app, ipcMain, shell, BrowserWindow } from 'electron';
 import path from 'path';
+import { hideToTray } from '../services/tray.js';
 
 export function registerWindowHandlers() {
   // 打开详情窗口
@@ -65,5 +66,17 @@ export function registerWindowHandlers() {
     if (window) {
       window.close();
     }
+  });
+
+  // 隐藏主窗口到系统托盘
+  ipcMain.handle('minimize-to-tray', () => {
+    return hideToTray();
+  });
+
+  // 直接退出应用（关闭弹窗选「直接退出」时走这里；
+  // 若再走 close-window 会被未记住的询问逻辑二次拦截）
+  ipcMain.handle('quit-app', () => {
+    app.quit();
+    return { success: true };
   });
 }

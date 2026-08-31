@@ -47,6 +47,26 @@ export async function initSettings() {
     });
   }
 
+  // 关闭时最小化到托盘开关（键不存在 = 未设置过，关闭时会弹窗询问；勾选/取消后视为已主动设置）
+  const minimizeToTrayEl = document.getElementById('minimize-to-tray');
+  if (minimizeToTrayEl) {
+    minimizeToTrayEl.checked = settings.minimizeToTray === true;
+    minimizeToTrayEl.addEventListener('change', async () => {
+      try {
+        if (typeof window.api === 'undefined') return;
+        const result = await window.api.saveSettings({ minimizeToTray: minimizeToTrayEl.checked });
+        if (result.success) {
+          showToast(minimizeToTrayEl.checked ? '已开启关闭时最小化到托盘' : '已关闭「关闭时最小化到托盘」');
+        } else {
+          showToast('保存设置失败：' + (result.error || '未知错误'));
+        }
+      } catch (err) {
+        console.error('保存托盘设置失败:', err);
+        showToast('保存设置失败');
+      }
+    });
+  }
+
   // 选择文件夹按钮 - 选择后自动保存
   folderBtn.addEventListener('click', async () => {
     try {

@@ -124,6 +124,17 @@
         <div id="settings" class="page hidden">
           <h2>设置</h2>
           <div class="settings-section">
+            <h3>常规</h3>
+            <div class="setting-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="minimize-to-tray" />
+                关闭时最小化到托盘
+              </label>
+              <p class="setting-description">开启后，点击关闭按钮将隐藏到系统托盘继续运行（下载不中断），可从托盘图标还原窗口；关闭则点击关闭直接退出。</p>
+            </div>
+          </div>
+
+          <div class="settings-section">
             <h3>下载设置</h3>
             <div class="setting-item">
               <label for="download-folder">下载文件夹:</label>
@@ -189,6 +200,27 @@
           <div class="dialog-footer">
             <button id="confirm-dialog-cancel" class="btn btn-secondary">取消</button>
             <button id="confirm-dialog-confirm" class="btn btn-primary">确定</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关闭行为询问对话框（用户未设置过关闭方式时由主进程触发） -->
+      <div id="close-behavior-dialog-overlay" class="dialog-overlay hidden">
+        <div class="dialog-container">
+          <div class="dialog-header">
+            <h3>关闭窗口</h3>
+          </div>
+          <div class="dialog-content">
+            <p>你还没有设置过关闭方式，请选择点击关闭按钮时的行为：</p>
+            <label class="checkbox-label dialog-remember-label">
+              <input type="checkbox" id="close-behavior-remember" />
+              记住选择，不再提醒
+            </label>
+          </div>
+          <div class="dialog-footer">
+            <button id="close-behavior-cancel" class="btn btn-secondary">取消</button>
+            <button id="close-behavior-quit" class="btn btn-secondary">直接退出</button>
+            <button id="close-behavior-tray" class="btn btn-primary">最小化到托盘</button>
           </div>
         </div>
       </div>

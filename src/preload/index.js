@@ -73,4 +73,13 @@ contextBridge.exposeInMainWorld('api', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   maximizeWindow: () => ipcRenderer.invoke('maximize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
+  minimizeToTray: () => ipcRenderer.invoke('minimize-to-tray'),
+  quitApp: () => ipcRenderer.invoke('quit-app'),
+
+  // 主进程请求询问关闭行为（用户未设置过关闭方式时），返回解绑函数
+  onCloseBehaviorConfirmRequested: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('close-behavior-confirm-requested', handler);
+    return () => ipcRenderer.removeListener('close-behavior-confirm-requested', handler);
+  },
 });

@@ -11,6 +11,7 @@ import { generateWelcomeContent, generateAboutContent } from './modules/pages.js
 import { loadRecentUpdates, initRecentUpdatesRefresh } from './modules/recentUpdates.js';
 import { performSearchAllGames, clearSearchInputAllGames, initSearchPage } from './modules/searchAllGames.js';
 import { initThemeToggle } from './modules/theme.js';
+import { initCloseBehavior } from './modules/closeBehavior.js';
 
 // ========== 初始化 ==========
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 初始化窗口控制按钮
   initWindowControls();
+
+  // 初始化关闭行为询问（未设置过关闭方式时，关闭前弹窗询问）
+  initCloseBehavior();
 
   // 初始化已下载列表事件
   initDownloadedListEvents();

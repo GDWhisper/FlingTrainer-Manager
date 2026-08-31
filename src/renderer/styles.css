@@ -1809,6 +1809,12 @@ h2 {
   white-space: pre-wrap;
 }
 
+/* 关闭行为弹窗内的「记住选择」勾选框 */
+.dialog-remember-label {
+  display: flex;
+  margin-top: 16px;
+}
+
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
