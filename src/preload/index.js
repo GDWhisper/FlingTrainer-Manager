@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('api', {
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   openFolder: (folderPath) => ipcRenderer.invoke('open-folder', folderPath),
+  setLaunchAtStartup: (enabled) => ipcRenderer.invoke('set-launch-at-startup', enabled),
 
   // 文件管理
   listDownloadedFiles: (folderPath) =>

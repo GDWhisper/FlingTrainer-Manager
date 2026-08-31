@@ -4,6 +4,7 @@ import { ipcMain, dialog } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { getAppDataDirectory } from '../utils/cache.js';
+import { applyAutoStart } from '../services/autostart.js';
 
 // 惰性求值：首次调用时才解析路径，确保 cache.js 的一次性迁移已生效
 function settingsFile() {
@@ -50,5 +51,18 @@ export function registerSettingsHandlers() {
       return result.filePaths[0];
     }
     return null;
+  });
+
+  // 开机自启开关：先落地系统登录项再写设置，注册表写入失败则不落盘，避免两处状态分叉
+  ipcMain.handle('set-launch-at-startup', async (_event, enabled) => {
+    try {
+      applyAutoStart(enabled);
+      const merged = { ...loadSettingsSync(), launchAtStartup: !!enabled };
+      fs.writeFileSync(settingsFile(), JSON.stringify(merged, null, 2));
+      return { success: true, enabled: !!enabled };
+    } catch (err) {
+      console.error('设置开机自启失败:', err);
+      return { success: false, error: err.message };
+    }
   });
 }

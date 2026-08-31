@@ -15,6 +15,7 @@ import { registerAllIpcHandlers } from './ipc/index.js';
 import { loadSettingsSync } from './ipc/settings.js';
 import { updateService } from './services/updater.js';
 import { bindMainWindow, hideToTray } from './services/tray.js';
+import { repairAutoStart } from './services/autostart.js';
 
 // 隐藏默认菜单栏
 Menu.setApplicationMenu(Menu.buildFromTemplate([]));
@@ -84,6 +85,9 @@ app
           createWindow();
         }
       });
+
+      // 开机自启自愈：登录项路径失效（便携版挪目录）时重写，见 services/autostart.js
+      repairAutoStart(loadSettingsSync());
 
       // 启动静默检查更新：仅打包版且用户未关闭开关；绝不自动下载，
       // 检查结果经 update-state-changed 推送与设置页快照回放呈现
