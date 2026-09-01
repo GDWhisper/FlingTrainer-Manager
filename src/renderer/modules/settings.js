@@ -67,6 +67,29 @@ export async function initSettings() {
     });
   }
 
+  // 开机自启开关（默认关闭；走专用 IPC 同步系统登录项，dev 下仅存设置不写注册表）
+  const launchAtStartupEl = document.getElementById('launch-at-startup');
+  if (launchAtStartupEl) {
+    launchAtStartupEl.checked = settings.launchAtStartup === true;
+    launchAtStartupEl.addEventListener('change', async () => {
+      try {
+        if (typeof window.api === 'undefined') return;
+        const result = await window.api.setLaunchAtStartup(launchAtStartupEl.checked);
+        if (result.success) {
+          settings = { ...settings, launchAtStartup: launchAtStartupEl.checked };
+          showToast(launchAtStartupEl.checked ? '已开启开机自动启动' : '已关闭开机自动启动');
+        } else {
+          launchAtStartupEl.checked = !launchAtStartupEl.checked;
+          showToast('设置开机自启失败：' + (result.error || '未知错误'));
+        }
+      } catch (err) {
+        console.error('设置开机自启失败:', err);
+        launchAtStartupEl.checked = !launchAtStartupEl.checked;
+        showToast('设置开机自启失败');
+      }
+    });
+  }
+
   // 选择文件夹按钮 - 选择后自动保存
   folderBtn.addEventListener('click', async () => {
     try {

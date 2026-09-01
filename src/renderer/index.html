@@ -123,7 +123,7 @@
         <!-- 设置 -->
         <div id="settings" class="page hidden">
           <h2>设置</h2>
-          <div class="settings-section pinned-top">
+          <div class="settings-section">
             <h3>下载设置</h3>
             <div class="setting-item">
               <label for="download-folder">下载文件夹:</label>
@@ -142,6 +142,13 @@
                 关闭时最小化到托盘
               </label>
               <p class="setting-description">开启后，点击关闭按钮将隐藏到系统托盘继续运行（下载不中断），可从托盘图标还原窗口；关闭则点击关闭直接退出。</p>
+            </div>
+            <div class="setting-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="launch-at-startup" />
+                开机自动启动
+              </label>
+              <p class="setting-description">开启后，Windows 登录时自动启动风灵月影宗。</p>
             </div>
           </div>
 
