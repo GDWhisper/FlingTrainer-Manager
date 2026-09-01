@@ -2,6 +2,33 @@
 
 import { showToast } from './toast.js';
 
+// 与主进程 updater.js 的 setProxy 保持同一套校验规则
+const PROXY_SCHEMES = ['http', 'https', 'socks', 'socks4', 'socks4a', 'socks5', 'socks5h'];
+
+/**
+ * 校验并归一化代理地址：省略协议时补 http://，合法则返回完整 URL，非法返回错误提示
+ */
+function normalizeProxyUrl(raw) {
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return { value: '' }; // 留空 = 直连
+  const withScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed) ? trimmed : `http://${trimmed}`;
+  let parsed;
+  try {
+    parsed = new URL(withScheme);
+  } catch {
+    return { error: '代理地址格式无效，示例：http://127.0.0.1:7890' };
+  }
+  const scheme = parsed.protocol.replace(':', '').toLowerCase();
+  if (!PROXY_SCHEMES.includes(scheme)) {
+    return { error: '暂只支持 http / https / socks5 代理地址' };
+  }
+  if (!parsed.hostname || !parsed.port) {
+    return { error: '代理地址需包含主机与端口，示例：http://127.0.0.1:7890' };
+  }
+  const auth = parsed.username ? `${parsed.username}:${parsed.password}@` : '';
+  return { value: `${parsed.protocol}//${auth}${parsed.host}` };
+}
+
 /**
  * 初始化设置页面
  */
@@ -10,6 +37,8 @@ export async function initSettings() {
   const folderBtn = document.getElementById('select-folder-btn');
   const openFolderBtn = document.getElementById('open-folder-btn');
   const autoCheckUpdateEl = document.getElementById('auto-check-update');
+  const updateProxyInput = document.getElementById('update-proxy');
+  const saveUpdateProxyBtn = document.getElementById('save-update-proxy-btn');
 
   if (!folderInput || !folderBtn) return;
 
@@ -20,6 +49,9 @@ export async function initSettings() {
       settings = await window.api.loadSettings();
       if (settings.downloadFolder) {
         folderInput.value = settings.downloadFolder;
+      }
+      if (updateProxyInput && settings.updateProxy) {
+        updateProxyInput.value = settings.updateProxy;
       }
     }
   } catch (err) {
@@ -87,6 +119,37 @@ export async function initSettings() {
         launchAtStartupEl.checked = !launchAtStartupEl.checked;
         showToast('设置开机自启失败');
       }
+    });
+  }
+
+  // 更新代理：校验通过才落盘；主进程在每次检查/下载前读取设置即时生效
+  async function saveUpdateProxy() {
+    if (typeof window.api === 'undefined') return;
+    const normalized = normalizeProxyUrl(updateProxyInput.value);
+    if (normalized.error) {
+      showToast(normalized.error);
+      return;
+    }
+    try {
+      const merged = { ...settings, updateProxy: normalized.value };
+      const result = await window.api.saveSettings(merged);
+      if (result.success) {
+        settings = merged;
+        updateProxyInput.value = normalized.value; // 回显归一化后的地址
+        showToast(normalized.value ? `更新代理已保存：${normalized.value}` : '已清除更新代理，检查更新将直连');
+      } else {
+        showToast('保存设置失败：' + (result.error || '未知错误'));
+      }
+    } catch (err) {
+      console.error('保存更新代理设置失败:', err);
+      showToast('保存设置失败');
+    }
+  }
+
+  if (updateProxyInput && saveUpdateProxyBtn) {
+    saveUpdateProxyBtn.addEventListener('click', saveUpdateProxy);
+    updateProxyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') saveUpdateProxy();
     });
   }
 

@@ -2,6 +2,15 @@
 
 import { app, ipcMain } from 'electron';
 import { updateService } from '../services/updater.js';
+import { loadSettingsSync } from './settings.js';
+
+// 每次发起网络动作前按最新设置应用更新代理（设置改动即时生效，无需重启）
+function applyProxyFromSettings() {
+  const applied = updateService.setProxy(loadSettingsSync().updateProxy || '');
+  if (!applied.success) {
+    console.warn('更新代理配置无效，已回退直连:', applied.error);
+  }
+}
 
 export function registerUpdaterHandlers() {
   // 检查更新（真实实现，替换原 window.js 占位）
@@ -10,6 +19,7 @@ export function registerUpdaterHandlers() {
     if (!app.isPackaged) {
       return { success: true, devMode: true, update: updateService.getSnapshot() };
     }
+    applyProxyFromSettings();
     try {
       const update = await updateService.check();
       return { success: true, update };
@@ -25,6 +35,7 @@ export function registerUpdaterHandlers() {
 
   // 开始/继续下载（available、paused、error 均可调用，自动断点续传）
   ipcMain.handle('download-update', async () => {
+    applyProxyFromSettings();
     return updateService.startDownload();
   });
 

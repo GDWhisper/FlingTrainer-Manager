@@ -96,6 +96,7 @@ app
           if (!app.isPackaged) return;
           const settings = loadSettingsSync();
           if (settings.autoCheckUpdate === false) return;
+          updateService.setProxy(settings.updateProxy || '');
           updateService.check().catch(() => {
             /* 静默检查失败不打扰用户，状态保留在 updateService 供查询 */
           });

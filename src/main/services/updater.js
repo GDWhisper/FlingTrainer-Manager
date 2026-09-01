@@ -13,6 +13,9 @@ import crypto from 'crypto';
 import { spawn } from 'child_process';
 import axios from 'axios';
 import { load as loadYaml } from 'js-yaml';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import { UPDATE_CONFIG } from '../constants.js';
 import { getAppDataDirectory, isPortableInstall } from '../utils/cache.js';
 
@@ -50,20 +53,34 @@ function compareVersions(a, b) {
 
 /**
  * 将 axios 错误转换为用户可读的提示
+ * @param {Error} err axios 错误
+ * @param {boolean} viaProxy 当前请求是否经代理发出（用于给出针对性提示）
  */
-function friendlyNetworkError(err) {
+function friendlyNetworkError(err, viaProxy = false) {
   const code = err?.code || '';
   if (code === 'ECONNRESET' || code === 'ECONNABORTED' || code === 'ETIMEDOUT') {
-    return '网络连接超时或被重置，请检查网络后重试';
+    return viaProxy
+      ? '网络连接超时或被重置，请检查代理是否可用后重试'
+      : '网络连接超时或被重置，请检查网络后重试';
+  }
+  if (code === 'ECONNREFUSED') {
+    return viaProxy
+      ? '无法连接到代理服务器，请检查代理地址与端口'
+      : '连接被拒绝，请检查网络后重试';
   }
   if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
-    return '无法连接到 GitHub，请检查网络或代理设置';
+    return viaProxy
+      ? '无法解析代理主机，请检查代理地址'
+      : '无法连接到 GitHub，请检查网络或代理设置';
   }
   if (code === 'ERR_CANCELED') {
     return '请求已取消';
   }
   return err?.message || '未知错误';
 }
+
+// 设置 updateProxy 支持的代理协议（socks 系由 socks-proxy-agent 处理）
+const PROXY_SCHEMES = ['http', 'https', 'socks', 'socks4', 'socks4a', 'socks5', 'socks5h'];
 
 class UpdateService extends EventEmitter {
   constructor() {
@@ -78,6 +95,54 @@ class UpdateService extends EventEmitter {
     this._notifyTimer = null;
     this._stallTimer = null;
     this._legacyUpdateDirCleaned = false;
+    this._proxyAgents = null; // { httpsAgent, httpAgent }，null 表示直连
+  }
+
+  // ========== 更新代理 ==========
+
+  /**
+   * 配置更新请求代理（检查更新与下载更新包共用），传空清除代理恢复直连。
+   * 不能用 axios 内置 proxy 选项：它对 https 目标不发 CONNECT，而是向代理发
+   * 明文绝对 URI 请求，Clash 等标准代理无法处理（已本地实证），必须走 agent 隧道。
+   * @param {string} proxyUrl 代理地址，如 http://127.0.0.1:7890 / socks5://127.0.0.1:7891
+   */
+  setProxy(proxyUrl) {
+    this._proxyAgents = null;
+    const raw = String(proxyUrl || '').trim();
+    if (!raw) return { success: true };
+
+    // 容忍省略协议的写法（127.0.0.1:7890 视为 http 代理）
+    const withScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw) ? raw : `http://${raw}`;
+    let parsed;
+    try {
+      parsed = new URL(withScheme);
+    } catch {
+      return { success: false, error: '代理地址格式无效' };
+    }
+    const scheme = parsed.protocol.replace(':', '').toLowerCase();
+    if (!PROXY_SCHEMES.includes(scheme) || !parsed.hostname || !parsed.port) {
+      return { success: false, error: '代理地址格式无效（支持 http/https/socks5，需含主机与端口）' };
+    }
+
+    if (scheme.startsWith('socks')) {
+      // socks-agent 同时可作 http/https 请求的 agent（TLS 由目标协议层处理）
+      const agent = new SocksProxyAgent(withScheme);
+      this._proxyAgents = { httpsAgent: agent, httpAgent: agent };
+    } else {
+      this._proxyAgents = {
+        httpsAgent: new HttpsProxyAgent(withScheme),
+        httpAgent: new HttpProxyAgent(withScheme),
+      };
+    }
+    return { success: true };
+  }
+
+  /**
+   * axios 请求的代理相关选项。恒显式 proxy:false：有代理走 agent，无代理直连，
+   * 均不受 HTTP_PROXY 等环境变量干扰（axios 的环境变量代理同样不走 CONNECT，不可用）。
+   */
+  _axiosProxyOptions() {
+    return { proxy: false, ...(this._proxyAgents || {}) };
   }
 
   // ========== 状态与通知 ==========
@@ -210,6 +275,7 @@ class UpdateService extends EventEmitter {
         transformResponse: [(data) => data],
         headers: { Accept: '*/*' },
         maxRedirects: 5,
+        ...this._axiosProxyOptions(),
       });
 
       const raw = loadYaml(response.data);
@@ -240,7 +306,7 @@ class UpdateService extends EventEmitter {
       const keepAvailable = this.manifest && this.state !== STATE.CHECKING;
       this._setState(
         keepAvailable ? STATE.AVAILABLE : STATE.ERROR,
-        keepAvailable ? '' : `检查更新失败：${friendlyNetworkError(err)}`
+        keepAvailable ? '' : `检查更新失败：${friendlyNetworkError(err, !!this._proxyAgents)}`
       );
       if (keepAvailable) return this.getSnapshot();
       throw new Error(this.errorMessage);
@@ -301,7 +367,7 @@ class UpdateService extends EventEmitter {
         }
       } else {
         // 真实错误：保留 .part 以便续传重试
-        this._setState(STATE.ERROR, `下载失败：${friendlyNetworkError(err)}`);
+        this._setState(STATE.ERROR, `下载失败：${friendlyNetworkError(err, !!this._proxyAgents)}`);
       }
     }
   }
@@ -344,6 +410,7 @@ class UpdateService extends EventEmitter {
           maxRedirects: 5,
           signal: controller.signal,
           headers,
+          ...this._axiosProxyOptions(),
         });
       } catch (err) {
         if (controller.signal.aborted) throw new Error(ABORTED);

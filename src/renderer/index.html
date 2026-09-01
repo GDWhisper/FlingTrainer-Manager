@@ -167,6 +167,12 @@
               </label>
               <p class="setting-description">仅在启动时联网检查新版本并提示，不会自动下载。</p>
             </div>
+            <div class="setting-item">
+              <label for="update-proxy">更新代理:</label>
+              <input type="text" id="update-proxy" placeholder="如 http://127.0.0.1:7890，留空则直连" />
+              <button id="save-update-proxy-btn" class="btn">保存</button>
+              <p class="setting-description">仅对「检查更新」和「下载更新包」生效；留空则不使用代理。支持 http / https / socks5 地址（如 Clash 的混合端口 7890），保存后立即生效，无需重启。</p>
+            </div>
 
             <div id="update-card" class="update-card hidden">
               <div class="update-card-header">

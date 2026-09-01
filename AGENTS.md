@@ -62,6 +62,7 @@ npm run dist       # build + electron-builder → dist/
 10. **占位 IPC `show-confirm-dialog`，勿在其上构建功能**：恒返回 true（真实确认弹窗在渲染进程 `modules/downloads.js` 的 `showConfirmDialog`）。原「检查更新占位」已替换为真实实现（见下条）。
 11. **下载任务不持久化**：任务只存在于 `downloader.js` 的内存 Map，重启即丢，这是有意现状（持久化在 `docs/ROADMAP.md` 路线图中），不要当作 bug 上报或顺手加持久化。
 12. **应用内更新是全自研的，勿换回 electron-updater**（`services/updater.js`）：electron-updater 6.x 的下载器无 pause、无 Range 断点续传（取消重试即从头下载），不满足「可暂停/停止/重试」的产品要求。约束：清单走 GitHub `releases/latest/download/latest.yml` 稳定直链（`UPDATE_CONFIG.GITHUB_BASE` 可覆盖以便本地冒烟）；`.part` 保留即暂停、删除即停止，跨重启凭磁盘 `.part` 续传；sha512 校验通过才改名；安装仅 `spawn /S` 且需用户确认，绝不自动下载；dev（`app.isPackaged === false`）不检查更新；`update-state-changed` 推送与下载监听同样适用三重防护（见第 3 条）。
+13. **更新代理必须走 agent 隧道，禁用 axios 内置 proxy 选项**（`services/updater.js` 的 `setProxy`）：axios（Node http 栈）不会读 Windows 系统代理，其内置 `proxy` 选项与环境变量代理对 https 目标都不发 CONNECT，而是向代理发明文绝对 URI 请求，Clash 等标准代理不识别（已本地实证 502）。所以设置键 `updateProxy` 经 `setProxy()` 建 https-proxy-agent / http-proxy-agent / socks-proxy-agent（三者是运行时依赖，须保留在 package.json `dependencies` 才会被 electron-builder 打包），请求显式 `proxy: false` 屏蔽环境变量干扰；无配置即直连，ipc 的 check/download 与启动静默检查前都重新应用，设置改动即时生效。
 
 ## 边界与禁区
 
