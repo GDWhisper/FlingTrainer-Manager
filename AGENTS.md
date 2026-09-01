@@ -32,6 +32,7 @@
 | `.dev_docs/` | 进行中的分析与重构文档（见「禁区」） |
 | `scripts/gen-icon.py` | 应用图标生成脚本；`app-icon-dark.png` / `icon.ico` / `build/icon.ico` 均由它产出，改图标跑脚本，勿直接改图 |
 | `.github/workflows/release.yml` | tag（`v*`）触发的云构建发布流水线：自动打包 Windows 产物并创建 GitHub Release（公告可放 `release-notes/<tag>.md`） |
+| `docs/RELEASE.md` | 发版指导：双 worktree 目录操作、发版 commit 构成、版本号粒度与发版后同步惯例；发版前必读 |
 
 ## 常用命令
 
