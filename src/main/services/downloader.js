@@ -115,8 +115,18 @@ class DownloadManager {
 
     try {
       const result = await this.performDownload(task);
-      
-      if (result.success) {
+
+      if (task.status === 'cancelled') {
+        // 取消发生在请求建立前（controller 尚未挂上）时，performDownload 会把文件下完，
+        // 这里统一尊重取消态并丢弃产物；正常取消路径的半截文件已由 performDownload 清理
+        try {
+          if (result.success && result.filePath && fs.existsSync(result.filePath)) {
+            fs.unlinkSync(result.filePath);
+          }
+        } catch (err) {
+          console.warn('清理已取消任务的产物失败:', err.message);
+        }
+      } else if (result.success) {
         task.status = 'completed';
         task.fileName = result.fileName;
         task.filePath = result.filePath;
@@ -126,19 +136,17 @@ class DownloadManager {
         task.status = 'failed';
         task.errorMessage = result.error;
       }
-      
+
       task.endTime = Date.now();
-      this.activeCount--;
-      this.notifyStatusChange();
-      
-      // 继续处理队列
-      this.processQueue();
-      
     } catch (err) {
       console.error(`下载任务 ${task.id} 异常:`, err);
-      task.status = 'failed';
-      task.errorMessage = err.message;
+      if (task.status !== 'cancelled') {
+        task.status = 'failed';
+        task.errorMessage = err.message;
+      }
       task.endTime = Date.now();
+    } finally {
+      // 活跃计数只在收尾扣减一次；取消路径不得重复扣减（否则计数变负会放大并发上限）
       this.activeCount--;
       this.notifyStatusChange();
       this.processQueue();
@@ -209,43 +217,78 @@ class DownloadManager {
         console.log(`开始下载：${fileName}, 大小：${(totalSize / 1024 / 1024).toFixed(2)} MB`);
 
         const writer = fs.createWriteStream(filePath);
-        
+
         // 速度计算相关
         let downloadedSize = 0;
         let lastSize = 0;
         let lastTime = Date.now();
         let speedSamples = []; // 最近的速度样本
 
-        // 设置 AbortController 用于取消
-        task.controller = { abort: () => response.data.destroy() };
+        // 结果收口：结果与「写入流已关闭（句柄释放）」两者齐备才 resolve；
+        // 失败/取消路径在句柄释放后才清理半截文件，避免 Windows 上删除被占用的文件失败
+        let settled = false;
+        let writerClosed = false;
+        let pendingResult = null;
+        const tryFinish = () => {
+          if (settled || pendingResult === null || !writerClosed) return;
+          settled = true;
+          if (!pendingResult.success) {
+            try {
+              if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            } catch (err) {
+              console.warn('清理未完成的下载文件失败:', err.message);
+            }
+          }
+          resolve(pendingResult);
+        };
+        const settle = (result) => {
+          if (pendingResult !== null) return; // 首个结果生效，其余忽略
+          pendingResult = result;
+          tryFinish();
+        };
+
+        writer.on('close', () => {
+          writerClosed = true;
+          tryFinish();
+        });
+
+        // 设置 AbortController 用于取消：必须同时销毁写入流释放文件句柄，
+        // 并让 Promise 落定（否则任务收尾永不执行，句柄与计数都会悬挂）
+        task.controller = {
+          abort: () => {
+            response.data.destroy();
+            writer.destroy();
+            settle({ cancelled: true });
+          },
+        };
 
         response.data.on('data', (chunk) => {
           downloadedSize += chunk.length;
           task.downloadedSize = downloadedSize;
-          
+
           // 计算瞬时速度（每 500ms 采样一次）
           const now = Date.now();
           if (now - lastTime >= 500) {
             const delta = downloadedSize - lastSize;
             const timeDelta = (now - lastTime) / 1000; // 转换为秒
             const instantSpeed = delta / timeDelta;
-            
+
             // 保存最近 5 个速度样本，计算平均值
             speedSamples.push(instantSpeed);
             if (speedSamples.length > 5) {
               speedSamples.shift();
             }
-            
+
             task.speed = speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length;
-            
+
             lastSize = downloadedSize;
             lastTime = now;
-            
+
             // 计算进度
             if (totalSize > 0) {
               task.progress = Math.min(100, (downloadedSize / totalSize) * 100);
             }
-            
+
             // 通知 UI 更新（限制频率，每秒最多 2 次）
             this.notifyStatusChange();
           }
@@ -253,47 +296,58 @@ class DownloadManager {
 
         response.data.on('error', (err) => {
           console.error('下载流错误:', err);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          resolve({ success: false, error: err.message });
+          writer.destroy();
+          settle({ success: false, error: err.message });
         });
 
         writer.on('finish', () => {
-          const stats = fs.statSync(filePath);
-          const actualFileName = path.basename(filePath); // 使用实际保存的文件名
-          console.log(`下载完成：${actualFileName}, 大小：${(stats.size / 1024 / 1024).toFixed(2)} MB`);
-          
-          if (stats.size === 0) {
-            fs.unlinkSync(filePath);
-            resolve({ success: false, error: '下载的文件为空' });
-          } else {
-            // 保存图标映射记录（使用实际文件名和完整路径）
-            if (task.gameImage) {
-              downloadedGamesIconManager.addOrUpdate(
-                task.id,
-                task.gameName,
-                task.gameImage,
-                task.downloadUrl,
-                actualFileName,
-                filePath // 传递完整文件路径用于计算哈希
-              );
-              console.log(`已保存游戏图标映射：${task.gameName} -> ${actualFileName}`);
+          try {
+            const stats = fs.statSync(filePath);
+            const actualFileName = path.basename(filePath); // 使用实际保存的文件名
+            console.log(`下载完成：${actualFileName}, 大小：${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+
+            if (stats.size === 0) {
+              settle({ success: false, error: '下载的文件为空' });
+            } else {
+              // 保存图标映射记录（使用实际文件名和完整路径）
+              if (task.gameImage) {
+                downloadedGamesIconManager.addOrUpdate(
+                  task.id,
+                  task.gameName,
+                  task.gameImage,
+                  task.downloadUrl,
+                  actualFileName,
+                  filePath // 传递完整文件路径用于计算哈希
+                );
+                console.log(`已保存游戏图标映射：${task.gameName} -> ${actualFileName}`);
+              }
+
+              settle({ success: true, fileName: actualFileName, filePath, fileSize: stats.size });
             }
-            
-            resolve({ success: true, fileName: actualFileName, filePath, fileSize: stats.size });
+          } catch (err) {
+            console.error('下载完成处理失败:', err);
+            settle({ success: false, error: err.message });
           }
         });
 
         writer.on('error', (err) => {
           console.error('写入文件失败:', err);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          resolve({ success: false, error: err.message });
+          response.data.destroy(); // 写入已不可恢复，掐断下载流避免空耗带宽
+          settle({ success: false, error: err.message });
         });
 
         response.data.pipe(writer);
-        
+
       } catch (err) {
         console.error('下载失败:', err.message);
-        resolve({ success: false, error: err.message });
+        if (writer) {
+          // 写入流已建立：销毁以触发 close，走统一收口（含半截文件清理）
+          writer.destroy();
+          settle({ success: false, error: err.message });
+        } else {
+          // 写入流尚未建立（多为请求阶段失败）：无句柄占用，直接落定
+          resolve({ success: false, error: err.message });
+        }
       }
     });
   }
@@ -304,19 +358,14 @@ class DownloadManager {
     if (!task) return false;
 
     if (task.status === 'downloading') {
-      // 正在下载中，中断连接
+      // 正在下载中，中断连接。活跃计数由 startDownload 收尾统一扣减；
+      // 半截文件由 performDownload 在写入流关闭（句柄释放）后清理，此处不删
       if (task.controller) {
         task.controller.abort();
       }
       task.status = 'cancelled';
       task.endTime = Date.now();
-      this.activeCount--;
-      
-      // 删除未完成的文件
-      if (task.filePath && fs.existsSync(task.filePath)) {
-        fs.unlinkSync(task.filePath);
-      }
-      
+
       console.log(`取消下载任务：${task.gameName}`);
     } else if (task.status === 'queued') {
       // 从队列中移除
@@ -339,28 +388,6 @@ class DownloadManager {
   // 获取所有任务
   getAllTasks() {
     return Array.from(this.tasks.values()).map(task => this.sanitizeTask(task));
-  }
-
-  // 获取任务状态
-  getTaskStatus(taskId) {
-    const task = this.tasks.get(taskId);
-    return task ? this.sanitizeTask(task) : null;
-  }
-
-  // 清除已完成/失败/取消的任务（保留最近的记录）
-  clearFinishedTasks() {
-    const now = Date.now();
-    const keepTime = 24 * 60 * 60 * 1000; // 保留 24 小时
-    
-    for (const [taskId, task] of this.tasks.entries()) {
-      if (['completed', 'cancelled', 'failed'].includes(task.status)) {
-        if (task.endTime && (now - task.endTime > keepTime)) {
-          this.tasks.delete(taskId);
-        }
-      }
-    }
-    
-    this.notifyStatusChange();
   }
 
   // 移除单个下载任务（包括文件记录和缓存）

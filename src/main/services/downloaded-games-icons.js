@@ -9,6 +9,26 @@ import { CACHE_TTL } from '../constants.js';
 import { getAppDataDirectory, getCacheDir, readCache, writeCache } from '../utils/cache.js';
 import { createHttpClient } from '../utils/http.js';
 
+// 分块读取计算 SHA256：整文件 readFileSync 会把几百 MB 的安装包一次性读进内存
+function hashFileSha256(filePath) {
+  const CHUNK_SIZE = 4 * 1024 * 1024;
+  const buffer = Buffer.alloc(CHUNK_SIZE);
+  let fd;
+  try {
+    fd = fs.openSync(filePath, 'r');
+    const hash = crypto.createHash('sha256');
+    let bytesRead;
+    while ((bytesRead = fs.readSync(fd, buffer, 0, CHUNK_SIZE, null)) > 0) {
+      hash.update(buffer.subarray(0, bytesRead));
+    }
+    return hash.digest('hex');
+  } finally {
+    if (fd !== undefined) {
+      try { fs.closeSync(fd); } catch { /* 忽略 */ }
+    }
+  }
+}
+
 // 已下载游戏图标映射管理
 class DownloadedGamesIconManager {
   constructor() {
@@ -52,11 +72,7 @@ class DownloadedGamesIconManager {
     let fileHash = null;
     try {
       if (fs.existsSync(filePath)) {
-        const crypto = require('crypto');
-        const fileBuffer = fs.readFileSync(filePath);
-        const hashSum = crypto.createHash('sha256');
-        hashSum.update(fileBuffer);
-        fileHash = hashSum.digest('hex');
+        fileHash = hashFileSha256(filePath);
         console.log(`文件哈希：${fileHash.substring(0, 16)}...`);
       }
     } catch (err) {
@@ -91,17 +107,13 @@ class DownloadedGamesIconManager {
     if (index >= 0) {
       const record = this.iconMap.tasks[index];
       
-      // 如果文件还存在，验证哈希值确保删除正确的记录
-      if (record.filePath && fs.existsSync(record.filePath)) {
+      // 如果文件还存在，核对哈希值确保删除正确的记录（仅在存过哈希时才值得算）
+      if (record.filePath && record.fileHash && fs.existsSync(record.filePath)) {
         try {
-          const crypto = require('crypto');
-          const fileBuffer = fs.readFileSync(record.filePath);
-          const hashSum = crypto.createHash('sha256');
-          hashSum.update(fileBuffer);
-          const currentHash = hashSum.digest('hex');
-          
+          const currentHash = hashFileSha256(record.filePath);
+
           // 如果哈希值不匹配，说明文件已被替换或损坏
-          if (record.fileHash && record.fileHash !== currentHash) {
+          if (record.fileHash !== currentHash) {
             console.warn(`[警告] 文件哈希不匹配，可能已被修改：${record.fileName}`);
           }
         } catch (err) {
@@ -141,13 +153,10 @@ class DownloadedGamesIconManager {
     
     // 3. 哈希值匹配（如果文件被移动但内容未变）
     try {
-      if (fs.existsSync(resolvedPath)) {
-        const crypto = require('crypto');
-        const fileBuffer = fs.readFileSync(resolvedPath);
-        const hashSum = crypto.createHash('sha256');
-        hashSum.update(fileBuffer);
-        const currentHash = hashSum.digest('hex');
-        
+      // 没有任何记录存过哈希时不值得把文件全读一遍
+      if (fs.existsSync(resolvedPath) && this.iconMap.tasks.some((t) => t.fileHash)) {
+        const currentHash = hashFileSha256(resolvedPath);
+
         const recordByHash = this.iconMap.tasks.find(t => t.fileHash && t.fileHash === currentHash);
         if (recordByHash) {
           console.log(`[图标匹配] 哈希值匹配：${recordByHash.gameName}`);

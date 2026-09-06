@@ -219,6 +219,9 @@ function cleanupOldFiles(dir, maxSize) {
   }
 }
 
+// 图片缓存总量的进程内估计值：避免每写一张图就全目录递归 stat 一遍（首次批量爬图为 O(N²)）
+let _imageCacheSizeEstimate = null;
+
 /**
  * 保存图片到本地缓存
  * @param {string} imageUrl - 图片 URL
@@ -227,7 +230,7 @@ function cleanupOldFiles(dir, maxSize) {
 export async function cacheImage(imageUrl, imageData) {
   try {
     const imageCacheDir = getCacheDir('images');
-    
+
     // 从 URL 生成文件名（使用 MD5 或简化路径）
     const urlHash = Buffer.from(imageUrl).toString('base64').replace(/[/+=]/g, '_');
     const ext = path.extname(new URL(imageUrl).pathname) || '.jpg';
@@ -236,12 +239,17 @@ export async function cacheImage(imageUrl, imageData) {
 
     // 写入图片
     fs.writeFileSync(filePath, imageData);
-    
-    // 检查并清理缓存，确保不超过大小限制
-    const totalSize = getDirSize(imageCacheDir);
-    
-    if (totalSize > IMAGE_CACHE_CONFIG.MAX_SIZE) {
+
+    // 检查并清理缓存，确保不超过大小限制（增量累计，超限时实测一次并纠正漂移）
+    if (_imageCacheSizeEstimate === null) {
+      _imageCacheSizeEstimate = getDirSize(imageCacheDir);
+    } else {
+      _imageCacheSizeEstimate += imageData.length;
+    }
+
+    if (_imageCacheSizeEstimate > IMAGE_CACHE_CONFIG.MAX_SIZE) {
       cleanupOldFiles(imageCacheDir, IMAGE_CACHE_CONFIG.MAX_SIZE);
+      _imageCacheSizeEstimate = getDirSize(imageCacheDir);
     }
   } catch (err) {
     console.warn('缓存图片失败:', err.message);
