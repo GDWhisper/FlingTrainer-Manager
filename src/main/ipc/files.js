@@ -4,6 +4,7 @@ import { ipcMain, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { getCacheRootPath } from '../utils/cache.js';
+import { loadSettingsSync } from './settings.js';
 import { downloadedGamesIconManager } from '../services/downloaded-games-icons.js';
 
 export function registerFilesHandlers() {
@@ -109,29 +110,27 @@ export function registerFilesHandlers() {
         return { success: false, error: '文件不存在' };
       }
 
-      // 检查文件是否在下载文件夹内（安全验证）
-      let settings;
-      try {
-        const settingsPath = path.join(__dirname, '../../.data/settings.json');
-        if (fs.existsSync(settingsPath)) {
-          const settingsContent = fs.readFileSync(settingsPath, 'utf-8');
-          settings = JSON.parse(settingsContent);
-        }
-      } catch (err) {
-        console.warn('读取设置失败:', err);
+      // 只允许删除已配置下载文件夹内的文件。必须经 getAppDataDirectory 读真实设置：
+      // 打包版没有仓库 .data/，旧实现读不到设置会静默跳过校验。
+      const downloadFolder = loadSettingsSync().downloadFolder;
+      if (!downloadFolder) {
+        return {
+          success: false,
+          error: '安全错误：未配置下载文件夹，禁止删除文件'
+        };
       }
 
-      if (settings && settings.downloadFolder) {
-        const normalizedFilePath = path.normalize(filePath);
-        const normalizedDownloadFolder = path.normalize(settings.downloadFolder);
-        
-        // 确保文件路径在下载文件夹内
-        if (!normalizedFilePath.startsWith(normalizedDownloadFolder)) {
-          return { 
-            success: false, 
-            error: '安全错误：只能删除下载文件夹内的文件' 
-          };
-        }
+      // Windows 路径不区分大小写；补分隔符边界，防止 C:\downloads2 之类同前缀目录绕过
+      const normalizedFilePath = path.normalize(filePath).toLowerCase();
+      const normalizedDownloadFolder = path.normalize(downloadFolder).toLowerCase();
+      const folderWithSep = normalizedDownloadFolder.endsWith(path.sep)
+        ? normalizedDownloadFolder
+        : normalizedDownloadFolder + path.sep;
+      if (normalizedFilePath !== normalizedDownloadFolder && !normalizedFilePath.startsWith(folderWithSep)) {
+        return {
+          success: false,
+          error: '安全错误：只能删除下载文件夹内的文件'
+        };
       }
 
       // 删除文件

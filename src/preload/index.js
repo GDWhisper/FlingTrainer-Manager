@@ -21,10 +21,6 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('clear-all-download-tasks'),
   getAllDownloadTasks: () =>
     ipcRenderer.invoke('get-all-download-tasks'),
-  getDownloadTaskStatus: (taskId) =>
-    ipcRenderer.invoke('get-download-task-status', taskId),
-  clearFinishedTasks: () =>
-    ipcRenderer.invoke('clear-finished-tasks'),
   startDownloadListener: () =>
     ipcRenderer.invoke('start-download-listener'),
   stopDownloadListener: () =>
@@ -51,7 +47,6 @@ contextBridge.exposeInMainWorld('api', {
   deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
 
   // 窗口和链接
-  openDetailWindow: (url) => ipcRenderer.invoke('open-detail-window', url),
   openExternalLink: (url) => ipcRenderer.invoke('open-external-link', url),
 
   // 应用更新

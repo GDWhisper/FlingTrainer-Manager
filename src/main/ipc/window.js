@@ -1,36 +1,25 @@
 // 窗口和外部链接 IPC 处理器
 
 import { app, ipcMain, shell, BrowserWindow } from 'electron';
-import path from 'path';
 import { hideToTray } from '../services/tray.js';
 
 export function registerWindowHandlers() {
-  // 打开详情窗口
-  ipcMain.handle('open-detail-window', async (_event, url) => {
-    const detailWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      webPreferences: {
-        preload: path.join(__dirname, '../preload/index.js'),
-        nodeIntegration: false,
-        contextIsolation: true,
-      },
-    });
-    detailWindow.loadURL(url);
-    return { success: true };
-  });
-
   // 打开外部链接
   ipcMain.handle('open-external-link', async (_event, url) => {
-    // 验证 URL 格式
+    // 只放行 http/https：链接可能来自抓取的网页内容，其他 scheme（file:、自定义协议等）
+    // 交给系统处理器执行存在被利用风险
+    let parsed;
     try {
-      new URL(url);
+      parsed = new URL(url);
     } catch {
       console.error('Invalid URL format:', url);
       return { success: false, error: '无效的链接格式' };
     }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { success: false, error: '仅支持打开 http/https 链接' };
+    }
     try {
-      await shell.openExternal(url);
+      await shell.openExternal(parsed.href);
       return { success: true };
     } catch (error) {
       console.error('Failed to open external link:', error);
