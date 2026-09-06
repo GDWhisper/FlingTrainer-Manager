@@ -10,6 +10,42 @@ import { getCacheDir, readCache, writeCache } from '../utils/cache.js';
 import { createHttpClient } from '../utils/http.js';
 import { downloadedGamesIconManager } from './downloaded-games-icons.js';
 
+// Trainer 资源的可信扩展名：URL 里的文件名候选只有带这类扩展名才采信，
+// 以排除 download-trainer.php 之类的中间跳转名
+const TRAINER_FILE_EXT = /\.(exe|zip|rar|7z)$/i;
+
+// 从 Content-Disposition 提取文件名（支持 RFC 5987 的 filename*= 形式）；
+// 解析失败一律返回空串而非抛错，文件名拿不到不应让整个下载失败
+function parseDispositionFileName(disposition) {
+  const star = disposition.match(/filename\*\s*=\s*[^;']*'[^;']*'([^;]+)/i);
+  if (star?.[1]) {
+    try {
+      return decodeURIComponent(star[1].trim().replace(/^"|"$/g, ''));
+    } catch { /* 编码异常则退回 filename= */ }
+  }
+  const plain = disposition.match(/filename\s*=\s*("([^"]*)"|[^;]+)/i);
+  if (plain) {
+    const raw = plain[2] !== undefined ? plain[2] : plain[1];
+    const name = raw.trim().replace(/^"|"$/g, '');
+    try {
+      return decodeURIComponent(name);
+    } catch {
+      return name; // 未转义的原始字节原样返回
+    }
+  }
+  return '';
+}
+
+// 按 Content-Type 推断扩展名（仅在响应头与 URL 都拿不到文件名时的最后兜底）
+function extFromContentType(contentType) {
+  const type = String(contentType || '').split(';')[0].trim().toLowerCase();
+  if (type.includes('msdownload') || type.includes('portable-executable')) return '.exe';
+  if (type.includes('zip')) return '.zip';
+  if (type.includes('rar')) return '.rar';
+  if (type.includes('7z')) return '.7z';
+  return '.exe'; // octet-stream 等未指明类型：本应用下载的都是 trainer 可执行文件
+}
+
 // 下载任务管理器（单例）
 class DownloadManager {
   constructor() {
@@ -174,27 +210,34 @@ class DownloadManager {
         const totalSize = parseInt(response.headers['content-length'] || '0', 10);
         task.fileSize = totalSize;
 
-        // 提取文件名
+        // 提取文件名。站点附件链接是 /downloads/<随机串> 形式（2026 年改版），本身不含文件名，
+        // 且最终响应不带 Content-Disposition，真实文件名只能取自重定向后的最终 URL：
+        // ① Content-Disposition ② 最终 URL / 原始 URL 中带可信扩展名者 ③ 游戏名 + Content-Type 推断扩展名
         let fileName = '';
         const disposition = response.headers['content-disposition'];
         if (disposition) {
-          const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-          if (match) {
-            fileName = match[1].replace(/['"]/g, '');
-            fileName = decodeURIComponent(fileName);
+          fileName = parseDispositionFileName(disposition);
+        }
+
+        if (!fileName) {
+          const finalUrl = response.request?.res?.responseUrl || '';
+          for (const url of [finalUrl, task.downloadUrl]) {
+            if (!url) continue;
+            try {
+              const base = decodeURIComponent(path.basename(new URL(url).pathname));
+              if (TRAINER_FILE_EXT.test(base)) {
+                fileName = base;
+                break;
+              }
+            } catch { /* URL 或编码异常，试下一个候选 */ }
           }
         }
 
         if (!fileName) {
-          try {
-            const urlObj = new URL(task.downloadUrl);
-            fileName = path.basename(urlObj.pathname);
-          } catch {
-            fileName = 'download.zip';
-          }
+          fileName = `${task.gameName || 'download'}${extFromContentType(response.headers['content-type'])}`;
         }
 
-        fileName = fileName.replace(/[<>:"/\\|?*]/g, '_');
+        fileName = fileName.replace(/[<>:"/\\|?*]/g, '_').replace(/[. ]+$/, '') || 'download.exe';
         
         // 确保目录存在
         if (!fs.existsSync(task.folder)) {
