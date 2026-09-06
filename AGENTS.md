@@ -58,7 +58,7 @@ npm run dist       # build + electron-builder → dist/
 6. **主窗口 `devTools: false`**：无法直接开 DevTools。调试渲染进程：开发时用浏览器打开 `http://localhost:5173`（渲染层对 `window.api` 未定义有保护），或临时改该开关。
 7. **无边框窗口** `frame: false`：最小化/最大化/关闭走 `ipc/window.js` + 渲染进程自定义标题栏，不要恢复系统边框。
 8. **模块风格分裂是有意的**：`preload/index.js` 用 CJS（require/contextBridge），main 与 renderer 用 ESM，保持现状。
-9. **版本号唯一权威是 `package.json` 的 `version`**（产物文件名依赖它）。`constants.js` 的 `APP_VERSION = '0.2.6'` 已过时（仅在 `main/index.js` 被 import，从未使用），不要依赖或扩展它。
+9. **版本号唯一权威是 `package.json` 的 `version`**（产物文件名依赖它）。不要在代码里另设版本常量（`constants.js` 曾留有 `APP_VERSION = '0.2.6'` 过时复制品，已删除）。
 10. **占位 IPC `show-confirm-dialog`，勿在其上构建功能**：恒返回 true（真实确认弹窗在渲染进程 `modules/downloads.js` 的 `showConfirmDialog`）。原「检查更新占位」已替换为真实实现（见下条）。
 11. **下载任务不持久化**：任务只存在于 `downloader.js` 的内存 Map，重启即丢，这是有意现状（持久化在 `docs/ROADMAP.md` 路线图中），不要当作 bug 上报或顺手加持久化。
 12. **应用内更新是全自研的，勿换回 electron-updater**（`services/updater.js`）：electron-updater 6.x 的下载器无 pause、无 Range 断点续传（取消重试即从头下载），不满足「可暂停/停止/重试」的产品要求。约束：清单走 GitHub `releases/latest/download/latest.yml` 稳定直链（`UPDATE_CONFIG.GITHUB_BASE` 可覆盖以便本地冒烟）；`.part` 保留即暂停、删除即停止，跨重启凭磁盘 `.part` 续传；sha512 校验通过才改名；安装仅 `spawn /S` 且需用户确认，绝不自动下载；dev（`app.isPackaged === false`）不检查更新；`update-state-changed` 推送与下载监听同样适用三重防护（见第 3 条）。

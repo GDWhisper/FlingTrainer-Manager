@@ -1,6 +1,5 @@
 // 页面和页签导航
 
-import { loadAllGames } from './games.js';
 import { loadDownloadedFiles, initDownloadList, stopDownloadListener } from './downloads.js';
 import { loadRecentUpdates } from './recentUpdates.js';
 

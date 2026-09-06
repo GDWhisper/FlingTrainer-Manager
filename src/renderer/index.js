@@ -3,7 +3,6 @@
 
 import { showToast } from './modules/toast.js';
 import { navigateTo, showTab } from './modules/navigation.js';
-import { loadAllGames } from './modules/games.js';
 import { downloadGame, loadDownloadedFiles, showConfirmDialog, initDownloadedListEvents } from './modules/downloads.js';
 import { initSettings } from './modules/settings.js';
 import { initUpdater } from './modules/updater.js';

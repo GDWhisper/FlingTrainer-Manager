@@ -1,8 +1,5 @@
 // 共享常量
 
-// 应用版本
-export const APP_VERSION = '0.2.6';
-
 // 目标网站
 export const TARGET_URL = 'https://flingtrainer.com';
 

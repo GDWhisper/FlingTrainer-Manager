@@ -10,7 +10,7 @@ process.on('unhandledRejection', (reason) => {
 
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
-import { APP_VERSION, UPDATE_CONFIG } from './constants.js';
+import { UPDATE_CONFIG } from './constants.js';
 import { registerAllIpcHandlers } from './ipc/index.js';
 import { loadSettingsSync } from './ipc/settings.js';
 import { updateService } from './services/updater.js';
